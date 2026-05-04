@@ -42,21 +42,48 @@ class SlitherlinkState:
 class Board:
     """Representação interna de um tabuleiro de Slitherlink."""
 
+    def __init__(self, rows, cols, activeEdges, grid):
+        self.rows = rows
+        self.cols = cols
+        self.activeEdges = activeEdges
+        self.grid = grid
+
     def adjacent_cell(self, cell:tuple) -> list:
         """Devolve uma lista das células que fazem
         fronteira com a célula enviada no argumento"""
-        #TODO
-        pass
 
-    def get_cell_edges(self, row:int, column:int) -> list:
+        res = []
+
+        if cell[0] > 0:
+            res.append(cell[0] - 1, cell[1])
+
+        if cell[1] != self.cols - 1:
+            res.append(cell[0], cell[1] + 1)
+
+        if cell[0] != self.rows - 1:
+            res.append(cell[0] + 1, cell[1])
+
+        if cell[1] > 0:
+            res.append(cell[0], cell[1] - 1)
+        
+        return res
+
+    def get_cell_edges(self, row:int, col:int) -> list:
         """Devolve os arestas da célula enviada no argumento"""
-        #TODO
-        pass
 
-    def get_active_edges(self, row:int, column:int) -> list:
+        return [('h', row, col), ('v', row, col + 1), ('h', row + 1, col), ('v', row, col)]
+
+    def get_active_edges(self, row:int, col:int) -> list:
         """Devolve o número de arestas ativas"""
-        #TODO
-        pass
+        
+        edges = self.get_cell_edges(row, col)
+        res = 0
+
+        for edge in edges:
+            if(edge in self.activeEdges):
+                res += 1
+
+        return res
 
 
     @staticmethod
@@ -70,10 +97,19 @@ class Board:
             > from sys import stdin
             > line = stdin.readline().split()
         """
-        # TODO
-        pass
 
-    # TODO: outros metodos da classe
+        grid = []
+
+        for line in sys.stdin: 
+            line = line.strip()
+            if line:
+                grid.append(line.split("\t"))
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        activeEdges = set()
+
+        return Board(rows, cols, activeEdges, grid)
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
