@@ -73,7 +73,7 @@ class Board:
 
         return [('h', row, col), ('v', row, col + 1), ('h', row + 1, col), ('v', row, col)]
 
-    def get_active_edges(self, row:int, col:int) -> list:
+    def get_active_edges(self, row:int, col:int) -> int:
         """Devolve o número de arestas ativas"""
         
         edges = self.get_cell_edges(row, col)
