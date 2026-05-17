@@ -97,7 +97,23 @@ class Board:
                 res += 1
         
         return res
+    
+    def  get_next_edges(self, row: int, col: int, direction: str) -> list:
+        res = []
 
+        if direction not in ('h', 'v'):
+            return res
+
+        if direction == 'h':
+            res.append((row, col - 1, 'h'))
+            res.append((row, col, 'v'))
+            res.append((row - 1, col, 'v'))
+            res.append((row, col + 1, 'h'))
+            res.append((row, col + 1, 'v'))
+            res.append((row - 1, col + 1, 'v'))
+        
+        return res
+    
 
     @staticmethod
     def parse_instance():
@@ -121,8 +137,9 @@ class Board:
         rows = len(grid)
         cols = len(grid[0])
         activeEdges = set()
+        blockedEdges = set()
 
-        return Board(rows, cols, activeEdges, grid)
+        return Board(rows, cols, activeEdges, blockedEdges, grid)
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
@@ -150,8 +167,48 @@ class Slitherlink(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
-        # TODO
-        pass
+        board = state.board
+        numRows = board.rows
+        numCols = board.col
+        allActiveEdges = board.activeEdges
+        grid = board.grid
+
+        firstEdge = allActiveEdges[0]
+        allActiveEdges.remove(firstEdge)
+        nextEdges = board.get_next_edges(firstEdge[0], firstEdge[1], firstEdge[2])
+        adjacent_active_edges = []
+        nextEdge = ()
+        for edge in nextEdges:
+            if(edge in allActiveEdges):
+                adjacent_active_edges.append(edge)
+        
+        if len(adjacent_active_edges) == 0:
+            return False
+        nextEdge = adjacent_active_edges[0]
+        
+        while (nextEdge != firstEdge):
+            nextEdges = board.get_next_edges(nextEdge[0], nextEdge[1], nextEdge[2])
+            adjacent_active_edges = []
+            allActiveEdges.remove(nextEdge)
+            for edge in nextEdges:
+                if(edge in allActiveEdges):
+                    adjacent_active_edges.append(edge)
+            if len(adjacent_active_edges != 1):
+                return False
+            nextEdge = adjacent_active_edges[0]
+
+        if len(allActiveEdges != 0):
+            return False
+
+        for row in range(numRows):
+            for col in rang(numCols):
+                cellNumber = grid[row][col]
+                if (cellNumber == '.'):
+                    continue                
+                if (get_active_edges(row, col) != cellNumber):
+                    return False
+        
+        return True        
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
