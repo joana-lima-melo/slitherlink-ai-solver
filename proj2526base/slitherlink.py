@@ -42,10 +42,11 @@ class SlitherlinkState:
 class Board:
     """Representação interna de um tabuleiro de Slitherlink."""
 
-    def __init__(self, rows, cols, activeEdges, grid):
+    def __init__(self, rows, cols, activeEdges, blockedEdges, grid):
         self.rows = rows
         self.cols = cols
         self.activeEdges = activeEdges
+        self.blockedEdges = blockedEdges
         self.grid = grid
 
     def adjacent_cell(self, cell:tuple) -> list:
@@ -83,6 +84,18 @@ class Board:
             if(edge in self.activeEdges):
                 res += 1
 
+        return res
+    
+    def get_blocked_edges(self, row: int, col: int) -> int:
+        """Devolve o número de arestas bloqueadas"""
+
+        edges = self.get_cell_edges(row, col)
+        res = 0
+
+        for edge in edges:
+            if(edge in self.blockedEdges):
+                res += 1
+        
         return res
 
 
