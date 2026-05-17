@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # slitherlink.py: Template para implementação do projeto de Inteligência Artificial 2025/2026.
 # Devem alterar as classes e funções neste ficheiro de acordo com as instruções do enunciado.
 # Além das funções e classes sugeridas, podem acrescentar outras que considerem pertinentes.
@@ -95,7 +95,7 @@ class Board:
             $ python3 pipe.py < test-01.txt
 
             > from sys import stdin
-            > line = stdin.readline().split()
+            > line = stdin.readline().split() 
         """
 
         grid = []
