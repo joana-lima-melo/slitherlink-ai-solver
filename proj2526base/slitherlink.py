@@ -100,7 +100,7 @@ class Board:
 
         grid = []
 
-        for line in sys.stdin: 
+        for line in stdin: 
             line = line.strip()
             if line:
                 grid.append(line.split("\t"))
