@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # slitherlink.py: Template para implementação do projeto de Inteligência Artificial 2025/2026.
 # Devem alterar as classes e funções neste ficheiro de acordo com as instruções do enunciado.
 # Além das funções e classes sugeridas, podem acrescentar outras que considerem pertinentes.
@@ -73,7 +73,7 @@ class Board:
 
         return [('h', row, col), ('v', row, col + 1), ('h', row + 1, col), ('v', row, col)]
 
-    def get_active_edges(self, row:int, col:int) -> list:
+    def get_active_edges(self, row:int, col:int) -> int:
         """Devolve o número de arestas ativas"""
         
         edges = self.get_cell_edges(row, col)
@@ -95,12 +95,12 @@ class Board:
             $ python3 pipe.py < test-01.txt
 
             > from sys import stdin
-            > line = stdin.readline().split()
+            > line = stdin.readline().split() 
         """
 
         grid = []
 
-        for line in sys.stdin: 
+        for line in stdin: 
             line = line.strip()
             if line:
                 grid.append(line.split("\t"))
