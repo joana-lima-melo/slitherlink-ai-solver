@@ -170,7 +170,7 @@ class Slitherlink(Problem):
         board = state.board
         numRows = board.rows
         numCols = board.col
-        allActiveEdges = board.activeEdges
+        allActiveEdges = list(board.activeEdges) #fazer uma cópia ao inves de modificar o set original
         grid = board.grid
 
         firstEdge = allActiveEdges[0]
@@ -185,27 +185,29 @@ class Slitherlink(Problem):
         if len(adjacent_active_edges) == 0:
             return False
         nextEdge = adjacent_active_edges[0]
+        allActiveEdges.remove(nextEdge)
         
         while (nextEdge != firstEdge):
             nextEdges = board.get_next_edges(nextEdge[0], nextEdge[1], nextEdge[2])
             adjacent_active_edges = []
-            allActiveEdges.remove(nextEdge)
             for edge in nextEdges:
-                if(edge in allActiveEdges):
+                if(edge in allActiveEdges) or (edge == firstEdge): #pq of firstEdge já tinha sido removido
                     adjacent_active_edges.append(edge)
-            if len(adjacent_active_edges != 1):
+            if len(adjacent_active_edges) != 1:
                 return False
             nextEdge = adjacent_active_edges[0]
+            if nextEdge != firstEdge: #se for o firstEdge ele já foi removido
+                allActiveEdges.remove(nextEdge)
 
-        if len(allActiveEdges != 0):
+        if len(allActiveEdges) != 0:
             return False
 
         for row in range(numRows):
-            for col in rang(numCols):
+            for col in range(numCols):
                 cellNumber = grid[row][col]
                 if (cellNumber == '.'):
                     continue                
-                if (get_active_edges(row, col) != cellNumber):
+                if (board.get_active_edges(row, col) != cellNumber):
                     return False
         
         return True        
