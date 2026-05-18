@@ -56,16 +56,16 @@ class Board:
         res = []
 
         if cell[0] > 0:
-            res.append(cell[0] - 1, cell[1])
+            res.append((cell[0] - 1, cell[1]))
 
         if cell[1] != self.cols - 1:
-            res.append(cell[0], cell[1] + 1)
+            res.append((cell[0], cell[1] + 1))
 
         if cell[0] != self.rows - 1:
-            res.append(cell[0] + 1, cell[1])
+            res.append((cell[0] + 1, cell[1]))
 
         if cell[1] > 0:
-            res.append(cell[0], cell[1] - 1)
+            res.append((cell[0], cell[1] - 1))
         
         return res
 
@@ -111,7 +111,18 @@ class Board:
             res.append((row, col + 1, 'h'))
             res.append((row, col + 1, 'v'))
             res.append((row - 1, col + 1, 'v'))
+
+        #falta se a aresta for vertical, mas é a mesma lógica, só que com as coordenadas trocadas
         
+        if direction == 'v':
+            res.append((row - 1, col, 'v'))
+            res.append((row, col - 1, 'h'))
+            res.append((row, col, 'h'))
+            res.append((row + 1, col, 'v'))
+            res.append((row + 1, col - 1, 'h'))
+            res.append((row + 1, col, 'h'))
+
+
         return res
     
 
