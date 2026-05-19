@@ -72,7 +72,7 @@ class Board:
     def get_cell_edges(self, row:int, col:int) -> list:
         """Devolve os arestas da célula enviada no argumento"""
 
-        return [('h', row, col), ('v', row, col + 1), ('h', row + 1, col), ('v', row, col)]
+        return [(row, col, 'v'), (row, col, 'h'), (row, col + 1, 'v'), (row + 1, col, 'h')] #mudar a ordem do tuplo para ser (row, col, direction) para ser mais fácil de comparar com as arestas ativas e bloqueadas
 
     def get_active_edges(self, row:int, col:int) -> int:
         """Devolve o número de arestas ativas"""
@@ -140,10 +140,14 @@ class Board:
 
         grid = []
 
+        
         for line in stdin: 
             line = line.strip()
             if line:
-                grid.append(line.split("\t"))
+                if '\t' in line:
+                    grid.append(line.split('\t'))
+                else:
+                    grid.append(line.split()) #há um erro no da stora
         
         rows = len(grid)
         cols = len(grid[0])
@@ -151,6 +155,44 @@ class Board:
         blockedEdges = set()
 
         return Board(rows, cols, activeEdges, blockedEdges, grid)
+    
+    def pre_process(self):
+        ""
+        changed = True
+        while changed:
+            before_count = len(self.activeEdges) + len(self.blockedEdges)
+            
+            self.rule_cell_0()
+            self.rule_cell_3_corner()
+            
+            after_count = len(self.activeEdges) + len(self.blockedEdges)
+            changed = (before_count != after_count)
+
+    def rule_cell_0(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '0':
+                    cell_edges = self.get_cell_edges(row, col)
+                    for edge in cell_edges:
+                        self.blockedEdges.add(edge)
+
+    def rule_cell_3_corner(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col]== '3':
+                    cell_edges = self.get_cell_edges(row, col)
+                    if (row-1, col, 'v') and (row,col-1, 'h') in self.blockedEdges or row == 0 or col == 0 :
+                        self.activeEdges.add((row, col, 'v'))
+                        self.activeEdges.add((row, col, 'h'))
+                    if (row+1, col-1, 'v') and (row,col+1, 'h') in self.blockedEdges or row == self.rows - 1 or col == self.cols - 1:
+                        self.activeEdges.add((row, col, 'v'))
+                        self.activeEdges.add((row, col + 1, 'h'))
+                        if edge not in self.blockedEdges:
+                            self.activeEdges.add(edge)
+        # to do
+        pass
+                    
+                        
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
