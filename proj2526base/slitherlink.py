@@ -125,6 +125,21 @@ class Board:
 
         return res
     
+    def get_all_vertical_edges(self) -> list:
+        res = []
+        for row in range(self.rows):
+            for col in range(self.cols + 1):
+                res.append((row, col, 'v'))
+        
+        return res
+    
+    def get_all_horizontal_edges(self) -> list:
+        res = []
+        for row in range(self.rows + 1):
+            for col in range(self.cols):
+                res.append((row, col, 'h'))
+        
+        return res
 
     @staticmethod
     def parse_instance():
