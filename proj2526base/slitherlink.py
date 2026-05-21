@@ -179,6 +179,7 @@ class Board:
             
             self.rule_cell_0()
             self.rule_cell_3_corner()
+            self.rule_complete_cell()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -224,8 +225,31 @@ class Board:
                     
 
     def rule_dead_end(self):
-        for 
+        for vertical in self.get_all_vertical_edges():
+            row = vertical[0]
+            col = vertical[1]
+            next_edges = self.get_next_edges(row, col, 'v')
 
+            if all(x in self.blockedEdges for x in next_edges[:3]):
+                self.blockedEdges.add(vertical)
+                continue
+
+            if all(x in self.blockedEdges for x in next_edges[3:]):
+                self.blockedEdges.add(vertical)
+                continue
+
+        for horizontal in self.get_all_horizontal_edges():
+            row = horizontal[0]
+            col = horizontal[1]
+            next_edges = self.get_next_edges(row, col, 'h')
+
+            if all(x in self.blockedEdges for x in next_edges[:3]):
+                self.blockedEdges.add(horizontal)
+                continue
+
+            if all(x in self.blockedEdges for x in next_edges[3:]):
+                self.blockedEdges.add(horizontal)
+                continue
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
