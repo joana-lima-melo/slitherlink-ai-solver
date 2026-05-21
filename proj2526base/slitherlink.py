@@ -180,6 +180,9 @@ class Board:
             self.rule_cell_0()
             self.rule_cell_3_corner()
             self.rule_complete_cell()
+            self.rule_dead_end()
+            self.rule_adjacent_3()
+            self.rule_only_one_possible_way()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -250,6 +253,71 @@ class Board:
             if all(x in self.blockedEdges for x in next_edges[3:]):
                 self.blockedEdges.add(horizontal)
                 continue
+
+
+    def rule_adjacent_3(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '3':
+                    for (cell_row, cell_col) in self.adjacent_cell((row, col)):
+                        if self.grid[cell_row][cell_col] == '3':
+                            if row == cell_row:
+                                if col > cell_col:
+                                    self.activeEdges.add((row, cell_col, 'v'))
+                                    self.activeEdges.add((row, col, 'v'))
+                                    self.activeEdges.add((row, col + 1, 'v'))
+                                else:
+                                    self.activeEdges.add((row, col, 'v'))
+                                    self.activeEdges.add((row, cell_col, 'v'))
+                                    self.activeEdges.add((row, cell_col + 1, 'v'))
+
+                            elif col == cell_col:
+                                if row > cell_row:
+                                    self.activeEdges.add((cell_row, col, 'h'))
+                                    self.activeEdges.add((row, col, 'h'))
+                                    self.activeEdges.add((row + 1, col, 'h'))
+                                else:
+                                    self.activeEdges.add((row, col, 'h'))
+                                    self.activeEdges.add((cell_row, col, 'h'))
+                                    self.activeEdges.add((cell_row + 1, col, 'h'))
+    
+
+    def rule_only_one_possible_way(self):
+        for edge in list(self.activeEdges):
+            first_edge_side = self.get_next_edges(edge[0], edge[1], edge[2])[:3]
+            possible_ways = []
+
+            for adjacent_edge in first_edge_side:
+                if adjacent_edge in self.activeEdges:
+                    possible_ways = []
+                    break
+                
+                if adjacent_edge not in self.blockedEdges:
+                    possible_ways.append(adjacent_edge)
+            
+            if len(possible_ways) == 1:
+                self.activeEdges.add(possible_ways[0])
+
+            second_edge_side = self.get_next_edges(edge[0], edge[1], edge[2])[3:]
+            possible_ways = []
+
+            for adjacent_edge in second_edge_side:
+                if adjacent_edge in self.activeEdges:
+                    possible_ways = []
+                    break
+                
+                if adjacent_edge not in self.blockedEdges:
+                    possible_ways.append(adjacent_edge)
+            
+            if len(possible_ways) == 1:
+                self.activeEdges.add(possible_ways[0])
+
+
+            
+
+
+
+
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
