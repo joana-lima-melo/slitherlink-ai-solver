@@ -313,11 +313,39 @@ class Board:
                 self.activeEdges.add(possible_ways[0])
 
 
-            
+    def rule_block_sides_continuous_line(self):
+        for edge in self.activeEdges:
+            next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
 
+            if edge[2] == 'h':
+                for adjacent_edge in next_edges:
+                    if adjacent_edge[2] == 'h':
+                        if adjacent_edge in self.activeEdges:
+                            if edge[1] > adjacent_edge[1]:
+                                if edge[0] < self.rows - 1:
+                                    self.blockedEdges.add((edge[0], edge[1], 'v'))
+                                if edge[0] > 0:
+                                    self.blockedEdges.add((edge[0] - 1, edge[1], 'v'))
+                            else:
+                                if edge[0] < self.rows - 1:
+                                    self.blockedEdges.add((edge[0], adjacent_edge[1], 'v'))
+                                if edge[0] > 0:
+                                    self.blockedEdges.add((edge[0] - 1, adjacent_edge[1], 'v'))
 
-
-
+            elif edge[2] == 'v':
+                for adjacent_edge in next_edges:
+                    if adjacent_edge[2] == 'v':
+                        if adjacent_edge in self.activeEdges:
+                            if edge[0] > adjacent_edge[0]:
+                                if edge[1] < self.cols - 1:
+                                    self.blockedEdges.add((edge[0], edge[1], 'h'))
+                                if edge[1] > 0:
+                                    self.blockedEdges.add((edge[0], edge[1] - 1, 'h'))
+                            else:
+                                if edge[1] < self.cols - 1:
+                                    self.blockedEdges.add((adjacent_edge[0], edge[1], 'h'))
+                                if edge[1] > 0:
+                                    self.blockedEdges.add((adjacent_edge[0], edge[1] - 1, 'h'))
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
@@ -347,9 +375,12 @@ class Slitherlink(Problem):
         estão preenchidas de acordo com as regras do problema."""
         board = state.board
         numRows = board.rows
-        numCols = board.col
-        allActiveEdges = list(board.activeEdges) #fazer uma cópia ao inves de modificar o set original
+        numCols = board.cols
+        allActiveEdges = list(board.activeEdges)
         grid = board.grid
+
+        if len(allActiveEdges) == 0:
+            return False
 
         firstEdge = allActiveEdges[0]
         allActiveEdges.remove(firstEdge)
@@ -369,12 +400,12 @@ class Slitherlink(Problem):
             nextEdges = board.get_next_edges(nextEdge[0], nextEdge[1], nextEdge[2])
             adjacent_active_edges = []
             for edge in nextEdges:
-                if(edge in allActiveEdges) or (edge == firstEdge): #pq of firstEdge já tinha sido removido
+                if edge in allActiveEdges or edge == firstEdge:
                     adjacent_active_edges.append(edge)
             if len(adjacent_active_edges) != 1:
                 return False
             nextEdge = adjacent_active_edges[0]
-            if nextEdge != firstEdge: #se for o firstEdge ele já foi removido
+            if nextEdge != firstEdge:
                 allActiveEdges.remove(nextEdge)
 
         if len(allActiveEdges) != 0:
@@ -383,9 +414,9 @@ class Slitherlink(Problem):
         for row in range(numRows):
             for col in range(numCols):
                 cellNumber = grid[row][col]
-                if (cellNumber == '.'):
+                if cellNumber == '.':
                     continue                
-                if (board.get_active_edges(row, col) != cellNumber):
+                if board.get_active_edges(row, col) != int(cellNumber):
                     return False
         
         return True        
