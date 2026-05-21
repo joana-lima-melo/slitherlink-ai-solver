@@ -98,7 +98,7 @@ class Board:
         
         return res
     
-    def  get_next_edges(self, row: int, col: int, direction: str) -> list:
+    def get_next_edges(self, row: int, col: int, direction: str) -> list:
         res = []
 
         if direction not in ('h', 'v'):
@@ -179,8 +179,9 @@ class Board:
     def rule_cell_3_corner(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.grid[row][col]== '3':
+                if self.grid[row][col] == '3':
                     cell_edges = self.get_cell_edges(row, col)
+'''
                     if (row-1, col, 'v') and (row,col-1, 'h') in self.blockedEdges or row == 0 or col == 0 :
                         self.activeEdges.add((row, col, 'v'))
                         self.activeEdges.add((row, col, 'h'))
@@ -189,10 +190,27 @@ class Board:
                         self.activeEdges.add((row, col + 1, 'h'))
                         if edge not in self.blockedEdges:
                             self.activeEdges.add(edge)
+                    '''
         # to do
         pass
                     
-                        
+    def rule_complete_cell(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                cell_num = self.grid[row][col]
+
+                if cell_num == '.':
+                    continue
+                
+                if self.get_blocked_edges(row, col) == 4 - int(cell_num):
+                    for edge in self.get_cell_edges(row, col):
+                        if edge not in self.blockedEdges:
+                            self.activeEdges.add(edge)
+                    
+
+    def rule_dead_end(self):
+        for 
+
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
@@ -232,7 +250,7 @@ class Slitherlink(Problem):
         adjacent_active_edges = []
         nextEdge = ()
         for edge in nextEdges:
-            if(edge in allActiveEdges):
+            if edge in allActiveEdges:
                 adjacent_active_edges.append(edge)
         
         if len(adjacent_active_edges) == 0:
