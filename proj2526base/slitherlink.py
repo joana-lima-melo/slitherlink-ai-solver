@@ -183,6 +183,7 @@ class Board:
             self.rule_dead_end()
             self.rule_adjacent_3()
             self.rule_only_one_possible_way()
+            self.block_sides_continuous_line()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
