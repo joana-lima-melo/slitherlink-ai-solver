@@ -68,6 +68,26 @@ class Board:
             res.append((cell[0], cell[1] - 1))
         
         return res
+    
+    def get_diagonal_cell(self, cell:tuple) -> list:
+        """Devolve uma lista das células na diagonal com a célula enviada no argumento.
+        Ordem: horária, a começar na diagonal superior esquerda"""
+
+        res = []
+
+        if cell[0] > 0 and cell[1] > 0:
+            res.append((cell[0] - 1, cell[1] - 1))
+        
+        if cell[0] > 0 and cell[1] < self.cols - 1:
+            res.append((cell[0] - 1, cell[1] + 1))
+        
+        if cell[0] < self.rows - 1 and cell[1] < self.cols - 1:
+            res.append((cell[0] + 1, cell[1] + 1))
+
+        if cell[0] < self.rows - 1 and cell[1] > 0:
+            res.append((cell[0] + 1, cell[1] - 1))
+
+        return res
 
     def get_cell_edges(self, row:int, col:int) -> list:
         """Devolve os arestas da célula enviada no argumento"""
@@ -186,6 +206,7 @@ class Board:
         self.rule_cell_3_corner()
         self.rule_cell_1_corner()
         self.rule_adjacent_3()
+        self.rule_0_diagonal_3()
 
         changed = True
 
@@ -199,6 +220,7 @@ class Board:
             self.rule_block_adjacent_edges_corner()
             self.rule_block_remaining_cell_edges()
             self.rule_avoid_square()
+            self.rule_avoid_micro_cycle()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -472,6 +494,32 @@ class Board:
             if current == side2 or side2 in visited:
                 if visited != self.activeEdges:
                     self.blockedEdges.add(edge)
+
+    
+    def rule_0_diagonal_3(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '3':
+                    for (d_row, d_col) in self.get_diagonal_cell((row, col)):
+                        if self.grid[d_row][d_col] == '0':
+                            
+                            if d_row < row and d_col < col:
+                                self.activeEdges.add((row, col, 'v'))
+                                self.activeEdges.add((row, col, 'h'))
+
+                            elif d_row < row and d_col > col:
+                                self.activeEdges.add((row, col+1, 'v'))
+                                self.activeEdges.add((row, col, 'h'))
+
+                            elif d_row > row and d_col > col:
+                                self.activeEdges.add((row, col+1, 'v'))
+                                self.activeEdges.add((row+1, col, 'h'))
+
+                            elif d_row > row and d_col < col:
+                                self.activeEdges.add((row, col, 'v'))
+                                self.activeEdges.add((row+1, col, 'h'))                   
+
+
                                   
 
 class Slitherlink(Problem):
