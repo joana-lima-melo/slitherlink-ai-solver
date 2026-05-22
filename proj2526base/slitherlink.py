@@ -226,8 +226,21 @@ class Board:
                         if edge not in self.blockedEdges:
                             self.activeEdges.add(edge)
         '''            
-        # to do
-        pass
+        if self.grid[0][0] == '3': 
+            self.activeEdges.add((0, 0, 'h'))
+            self.activeEdges.add((0, 0, 'v'))
+        
+        if self.grid[0][self.cols - 1] == '3':
+            self.activeEdges.add((0, self.cols - 1, 'h'))
+            self.activeEdges.add((0, self.cols, 'v'))
+
+        if self.grid[self.rows - 1][0] == '3':
+            self.activeEdges.add((self.rows, 0, 'h'))
+            self.activeEdges.add((self.rows - 1, 0, 'v'))
+        
+        if self.grid[self.rows - 1][self.cols - 1] == '3':
+            self.activeEdges.add((self.rows, self. cols - 1, 'h'))
+            self.activeEdges.add((self.rows - 1, self.cols, 'v'))
                     
     def rule_complete_cell(self):
         for row in range(self.rows):
