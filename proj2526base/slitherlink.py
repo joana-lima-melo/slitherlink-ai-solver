@@ -183,7 +183,8 @@ class Board:
             self.rule_dead_end()
             self.rule_adjacent_3()
             self.rule_only_one_possible_way()
-            self.block_sides_continuous_line()
+            self.rule_block_sides_continuous_line()
+            self.rule_block_adjacent_edges_corner()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -197,11 +198,11 @@ class Board:
                         self.blockedEdges.add(edge)
 
     def rule_cell_3_corner(self):
-        for row in range(self.rows):
+        '''for row in range(self.rows):
             for col in range(self.cols):
                 if self.grid[row][col] == '3':
                     cell_edges = self.get_cell_edges(row, col)
-'''
+
                     if (row-1, col, 'v') and (row,col-1, 'h') in self.blockedEdges or row == 0 or col == 0 :
                         self.activeEdges.add((row, col, 'v'))
                         self.activeEdges.add((row, col, 'h'))
@@ -210,7 +211,7 @@ class Board:
                         self.activeEdges.add((row, col + 1, 'h'))
                         if edge not in self.blockedEdges:
                             self.activeEdges.add(edge)
-                    '''
+        '''            
         # to do
         pass
                     
@@ -347,6 +348,27 @@ class Board:
                                     self.blockedEdges.add((adjacent_edge[0], edge[1], 'h'))
                                 if edge[1] > 0:
                                     self.blockedEdges.add((adjacent_edge[0], edge[1] - 1, 'h'))
+    
+
+    def rule_block_adjacent_edges_corner(self):
+        for edge in self.activeEdges:
+            perpendicular_active_edges = self.get_next_edges(edge[0], edge[1], edge[2])
+            for adjacent_edge in list(perpendicular_active_edges):
+                if adjacent_edge[2] == edge[2] or adjacent_edge not in self.activeEdges:
+                    perpendicular_active_edges.remove(adjacent_edge)
+
+            for edge2 in perpendicular_active_edges:
+                next_edges1 = set(self.get_next_edges(edge[0], edge[1], edge[2]))
+                next_edges2 = set(self.get_next_edges(edge2[0], edge2[1], edge2[2]))
+                impossible_edges = next_edges1 & next_edges2
+                for impossible_edge in impossible_edges:
+                    self.blockedEdges.add(impossible_edge)
+            
+
+
+            
+
+            
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
