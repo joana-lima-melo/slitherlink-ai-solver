@@ -169,6 +169,16 @@ class Board:
         activeEdges = set()
         blockedEdges = set()
 
+        #Bloquear o contorno do tabuleiro
+
+        for row in range(rows):
+            blockedEdges.add((row, -1, 'h'))
+            blockedEdges.add((row, cols, 'h'))
+        
+        for col in range(cols):
+            blockedEdges.add((-1, col, 'v'))
+            blockedEdges.add((rows, col, 'v'))
+
         return Board(rows, cols, activeEdges, blockedEdges, grid)
     
     def pre_process(self):
