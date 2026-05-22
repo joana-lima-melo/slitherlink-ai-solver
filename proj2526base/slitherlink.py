@@ -430,9 +430,49 @@ class Board:
         if self.grid[self.rows - 1][self.cols - 1] == '1':
             self.blockedEdges.add((self.rows, self. cols - 1, 'h'))
             self.blockedEdges.add((self.rows - 1, self.cols, 'v'))
-                    
+    
 
+    def rule_avoid_micro_cycle(self):
+        all_edges = self.get_all_horizontal_edges() + self.get_all_vertical_edges()
+        
+        for edge in all_edges:
+            if edge in self.activeEdges or edge in self.blockedEdges:
+                continue
+
+            next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
+
+            side1 = None
+            side2 = None
+
+            for possible_way in next_edges[:3]:
+                if possible_way in self.activeEdges:
+                    side1 = possible_way
+
+            for possible_way in next_edges[3:]:
+                if possible_way in self.activeEdges:
+                    side2 = possible_way
             
+            if side1 == None or side2 == None:
+                continue
+
+            visited = {edge}
+            current = side1
+            previous = edge
+
+            while current is not None and current not in visited:
+                visited.add(current)
+                next_current = None
+                for next_edge in self.get_next_edges(current[0], current[1], current[2]):
+                    if next_edge in self.activeEdges and next_edge != previous:
+                        next_current = next_edge
+                        break
+                previous = current
+                current = next_current
+            
+            if current == side2 or side2 in visited:
+                if visited != self.activeEdges:
+                    self.blockedEdges.add(edge)
+                                  
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
@@ -462,7 +502,7 @@ class Slitherlink(Problem):
         estão preenchidas de acordo com as regras do problema."""
         board = state.board
         numRows = board.rows
-        num0s = board.cols
+        numCols = board.cols
         allActiveEdges = list(board.activeEdges)
         grid = board.grid
 
