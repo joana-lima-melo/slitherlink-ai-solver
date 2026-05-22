@@ -500,7 +500,7 @@ class Board:
                     valid = True
                     for row in range(self.rows):
                         for col in range(self.cols):
-                            cellNumber = iself.grid[row][col]
+                            cellNumber = self.grid[row][col]
                             if cellNumber == '.':
                                 continue
                             if self.get_active_edges(row, col) != int(cellNumber):
