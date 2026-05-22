@@ -184,6 +184,7 @@ class Board:
     def pre_process(self):
         self.rule_cell_0()
         self.rule_cell_3_corner()
+        self.rule_cell_1_corner()
         self.rule_adjacent_3()
 
         changed = True
@@ -196,6 +197,8 @@ class Board:
             self.rule_only_one_possible_way()
             self.rule_block_sides_continuous_line()
             self.rule_block_adjacent_edges_corner()
+            self.rule_block_remaining_cell_edges()
+            self.rule_avoid_square()
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -376,7 +379,7 @@ class Board:
                     self.blockedEdges.add(impossible_edge)
     
 
-    def block_remaining_cell_edges(self):         
+    def rule_block_remaining_cell_edges(self):         
         for row in range(self.rows):
             for col in range(self.cols):
                 if self.grid[row][col] == '.':
@@ -386,8 +389,35 @@ class Board:
                     for edge in self.get_cell_edges(row, col):
                         if edge not in self.activeEdges:
                             self.blockedEdges.add(edge)
+    
+
+    def rule_avoid_square(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '.':
+                    if self.get_active_edges(row, col) == 3:
+                        for edge in self.get_cell_edges(row, col):
+                            if edge not in self.activeEdges:
+                                self.blockedEdges.add(edge)
 
 
+    def rule_cell_1_corner(self):
+        if self.grid[0][0] == '1': 
+            self.blockedEdges.add((0, 0, 'h'))
+            self.blockedEdges.add((0, 0, 'v'))
+        
+        if self.grid[0][self.cols - 1] == '1':
+            self.blockedEdges.add((0, self.cols - 1, 'h'))
+            self.blockedEdges.add((0, self.cols, 'v'))
+
+        if self.grid[self.rows - 1][0] == '1':
+            self.blockedEdges.add((self.rows, 0, 'h'))
+            self.blockedEdges.add((self.rows - 1, 0, 'v'))
+        
+        if self.grid[self.rows - 1][self.cols - 1] == '1':
+            self.blockedEdges.add((self.rows, self. cols - 1, 'h'))
+            self.blockedEdges.add((self.rows - 1, self.cols, 'v'))
+                    
 
             
 
@@ -419,7 +449,7 @@ class Slitherlink(Problem):
         estão preenchidas de acordo com as regras do problema."""
         board = state.board
         numRows = board.rows
-        numCols = board.cols
+        num0s = board.cols
         allActiveEdges = list(board.activeEdges)
         grid = board.grid
 
