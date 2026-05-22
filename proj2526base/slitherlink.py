@@ -182,16 +182,17 @@ class Board:
         return Board(rows, cols, activeEdges, blockedEdges, grid)
     
     def pre_process(self):
-        ""
+        self.rule_cell_0()
+        self.rule_cell_3_corner()
+        self.rule_adjacent_3()
+
         changed = True
+
         while changed:
             before_count = len(self.activeEdges) + len(self.blockedEdges)
-            
-            self.rule_cell_0()
-            self.rule_cell_3_corner()
+
             self.rule_complete_cell()
             self.rule_dead_end()
-            self.rule_adjacent_3()
             self.rule_only_one_possible_way()
             self.rule_block_sides_continuous_line()
             self.rule_block_adjacent_edges_corner()
@@ -373,10 +374,20 @@ class Board:
                 impossible_edges = next_edges1 & next_edges2
                 for impossible_edge in impossible_edges:
                     self.blockedEdges.add(impossible_edge)
-            
+    
+
+    def block_remaining_cell_edges(self):         
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '.':
+                    continue
+                
+                if self.get_active_edges(row, col) == int(self.grid[row][col]):
+                    for edge in self.get_cell_edges(row, col):
+                        if edge not in self.activeEdges:
+                            self.blockedEdges.add(edge)
 
 
-            
 
             
 
