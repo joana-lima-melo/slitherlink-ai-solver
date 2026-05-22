@@ -204,9 +204,11 @@ class Board:
     def pre_process(self):
         self.rule_cell_0()
         self.rule_cell_3_corner()
+        self.rule_cell_2_corner()
         self.rule_cell_1_corner()
         self.rule_adjacent_3()
         self.rule_0_diagonal_3()
+        self.rule_3_diagonal_3()
 
         changed = True
 
@@ -494,6 +496,20 @@ class Board:
             if current == side2 or side2 in visited:
                 if visited != self.activeEdges:
                     self.blockedEdges.add(edge)
+                else:
+                    valid = True
+                    for row in range(self.rows):
+                        for col in range(self.cols):
+                            cellNumber = iself.grid[row][col]
+                            if cellNumber == '.':
+                                continue
+                            if self.get_active_edges(row, col) != int(cellNumber):
+                                valid = False
+                                break
+                        if not valid:
+                            break
+                    if not valid:
+                        self.blockedEdges.add(edge)                            
 
     
     def rule_0_diagonal_3(self):
@@ -552,7 +568,23 @@ class Board:
                                 self.activeEdges.add((row + 1, col, 'h'))                                       
 
 
-                                  
+    def rule_cell_2_corner(self):
+        if self.grid[0][0] == '2':
+            self.activeEdges.add((1, 0, 'v'))
+            self.activeEdges.add((0, 1, 'h'))
+
+        if self.grid[0][self.cols - 1] == '2':
+            self.activeEdges.add((1, self.cols, 'v'))
+            self.activeEdges.add((0, self.cols - 2, 'h'))
+
+        if self.grid[self.rows - 1][self.cols - 1] == '2':
+            self.activeEdges.add((self.rows - 2, self.cols, 'v'))
+            self.activeEdges.add((self.rows, self.cols - 2, 'h'))
+
+        if self.grid[self.rows - 1][0] == '2':
+            self.activeEdges.add((self.rows - 2, 0, 'v'))
+            self.activeEdges.add((self.rows, 1, 'h'))
+                                              
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
