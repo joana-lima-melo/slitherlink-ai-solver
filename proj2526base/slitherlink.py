@@ -508,16 +508,48 @@ class Board:
                                 self.activeEdges.add((row, col, 'h'))
 
                             elif d_row < row and d_col > col:
-                                self.activeEdges.add((row, col+1, 'v'))
+                                self.activeEdges.add((row, col + 1, 'v'))
                                 self.activeEdges.add((row, col, 'h'))
 
                             elif d_row > row and d_col > col:
-                                self.activeEdges.add((row, col+1, 'v'))
-                                self.activeEdges.add((row+1, col, 'h'))
+                                self.activeEdges.add((row, col + 1, 'v'))
+                                self.activeEdges.add((row + 1, col, 'h'))
 
                             elif d_row > row and d_col < col:
                                 self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row+1, col, 'h'))                   
+                                self.activeEdges.add((row + 1, col, 'h'))
+
+
+    def rule_3_diagonal_3(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.grid[row][col] == '3':
+                    for (d_row, d_col) in self.get_diagonal_cell((row, col)):
+                        if self.grid[d_row][d_col] == '3':
+                            
+                            if d_row < row and d_col < col:
+                                self.activeEdges.add((row, col + 1, 'v'))
+                                self.activeEdges.add((row + 1, col, 'h'))
+                                self.activeEdges.add((d_row, d_col, 'v'))
+                                self.activeEdges.add((d_row, d_col, 'h'))
+
+                            elif d_row < row and d_col > col:
+                                self.activeEdges.add((row, col, 'v'))
+                                self.activeEdges.add((row + 1, col, 'h'))
+                                self.activeEdges.add((d_row, d_col + 1, 'v'))
+                                self.activeEdges.add((d_row, d_col, 'h'))
+
+                            elif d_row > row and d_col > col:
+                                self.activeEdges.add((row, col, 'v'))
+                                self.activeEdges.add((row, col, 'h'))
+                                self.activeEdges.add((d_row, d_col  + 1, 'v'))
+                                self.activeEdges.add((d_row + 1, d_col, 'h'))
+
+                            elif d_row > row and d_col < col:
+                                self.activeEdges.add((d_row, d_col + 1, 'v'))
+                                self.activeEdges.add((d_row, d_col, 'h'))
+                                self.activeEdges.add((row, col, 'v'))
+                                self.activeEdges.add((row + 1, col, 'h'))                                       
 
 
                                   
