@@ -778,16 +778,13 @@ class Slitherlink(Problem):
 
 if __name__ == "__main__":
     board = Board.parse_instance()
-    processed_board = Board.apply_advanced_rules(Board.pre_process(board))
-    problem = Slitherlink(processed_board)
+    board.pre_process()
+    board.apply_advanced_rules()
+    problem = Slitherlink(board)
     
-    
-    """goal = depth_first_tree_search(problem)
-    if goal is not None:
-       
-        final_state = goal.state
-        Board.print_board(final_stated)"""  #ainda é preciso de fazer isto 
-    pass
+    goal = depth_first_tree_search(problem)
+    goal.state.board.print_board()
+
 
 
 
