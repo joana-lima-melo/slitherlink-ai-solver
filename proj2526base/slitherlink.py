@@ -201,6 +201,10 @@ class Board:
 
         return Board(rows, cols, activeEdges, blockedEdges, grid)
     
+    def print_board(self):
+        #TODO
+        pass
+    
     def pre_process(self):
         self.rule_cell_0()
         self.rule_cell_3_corner()
@@ -209,6 +213,8 @@ class Board:
         self.rule_adjacent_3()
         self.rule_0_diagonal_3()
         self.rule_3_diagonal_3()
+
+    def apply_advanced_rules(self):
 
         changed = True
 
@@ -661,24 +667,46 @@ class Board:
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
         """O construtor especifica o estado inicial."""
-        # TODO
-        pass
+        
+        initial_state = SlitherlinkState(board)
+        
+        # Initialize the parent 'Problem' class (Standard AIMA framework)
+        super().__init__(initial_state)
 
 
     def actions(self, state: SlitherlinkState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        pass
+        state= state.board
 
+        for active_edge in board.activeEdges:
+            next_to_active_edge = board.get_next_edges(active_edge[0], active_edge[1], active_edge[2])
+            for edge in next_to_active_edge:
+                if edge not in board.activeEdges and edge not in board.blockedEdges:
+                    return [("activate", edge), ("block", edge)]
+
+        return []
 
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        # TODO
-        pass
+        new_state = copy.deepcopy(state)
+        new_board = new_state.board
+
+        # Unpack the action we created in the actions() function
+        action_type, edge = action
+
+        # 2. Apply the action
+        if action_type == "activate":
+            new_board.activeEdges.add(edge)
+        elif action_type == "block":
+            new_board.blockedEdges.add(edge)
+
+        new_board.apply_advanced_rules() 
+
+        return new_state
 
     def goal_test(self, state: SlitherlinkState):
         """Retorna True se e só se o estado passado como argumento é
@@ -741,11 +769,16 @@ class Slitherlink(Problem):
 
 
 if __name__ == "__main__":
-    # TODO:
-    # Ler o ficheiro do standard input, - > Board.parse_instance(),
-    # Usar uma técnica de procura para resolver a instância,
-    # Retirar a solução a partir do nó resultante,
-    # Imprimir para o standard output no formato indicado.  
+    board = Board.parse_instance()
+    processed_board = Board.apply_advanced_rules(Board.pre_process(board))
+    problem = Slitherlink(processed_board)
+    
+    
+    """goal = depth_first_tree_search(problem)
+    if goal is not None:
+       
+        final_state = goal.state
+        Board.print_board(final_stated)"""  #ainda é preciso de fazer isto 
     pass
 
 
