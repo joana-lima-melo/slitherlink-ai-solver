@@ -202,8 +202,16 @@ class Board:
         return Board(rows, cols, activeEdges, blockedEdges, grid)
     
     def print_board(self):
-        #TODO
-        pass
+        for row in range(self.rows):
+            for col in range(self.cols):
+                edges_in_printing_order= (self.get_cell_edges(row, col)[1:], self.get_cell_edges(row, col)[3])
+                for edge in edges_in_printing_order:
+                    if edge in self.activeEdges:
+                        print('1', end='')
+                    else:
+                        print('0', end='')
+                print('\t', end='')
+            print('\n', end='')
     
     def pre_process(self):
         self.rule_cell_0()
