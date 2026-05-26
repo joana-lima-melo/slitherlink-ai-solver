@@ -716,52 +716,55 @@ class Slitherlink(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
         board = state.board
-        numRows = board.rows
-        numCols = board.cols
-        allActiveEdges = list(board.activeEdges)
-        grid = board.grid
 
-        if len(allActiveEdges) == 0:
+        if len(board.activeEdges) == 0:
             return False
 
-        firstEdge = allActiveEdges[0]
-        allActiveEdges.remove(firstEdge)
-        nextEdges = board.get_next_edges(firstEdge[0], firstEdge[1], firstEdge[2])
-        adjacent_active_edges = []
-        nextEdge = ()
-        for edge in nextEdges:
-            if edge in allActiveEdges:
-                adjacent_active_edges.append(edge)
-        
-        if len(adjacent_active_edges) == 0:
-            return False
-        nextEdge = adjacent_active_edges[0]
-        allActiveEdges.remove(nextEdge)
-        
-        while (nextEdge != firstEdge):
-            nextEdges = board.get_next_edges(nextEdge[0], nextEdge[1], nextEdge[2])
-            adjacent_active_edges = []
-            for edge in nextEdges:
-                if edge in allActiveEdges or edge == firstEdge:
-                    adjacent_active_edges.append(edge)
-            if len(adjacent_active_edges) != 1:
-                return False
-            nextEdge = adjacent_active_edges[0]
-            if nextEdge != firstEdge:
-                allActiveEdges.remove(nextEdge)
-
-        if len(allActiveEdges) != 0:
-            return False
-
-        for row in range(numRows):
-            for col in range(numCols):
-                cellNumber = grid[row][col]
+        for row in range(board.rows):
+            for col in range(board.cols):
+                cellNumber = board.grid[row][col]
                 if cellNumber == '.':
                     continue                
                 if board.get_active_edges(row, col) != int(cellNumber):
                     return False
-        
-        return True        
+                
+        first_edge = list(board.activeEdges)[0]
+        current_edge = first_edge  
+        previous_edge = None      
+        count_edges_cicle = 0
+        for _ in range(len(board.activeEdges)):
+            
+            next_edges = board.get_next_edges(current_edge[0], current_edge[1], current_edge[2])
+
+            side1 = []
+            side2 =[]
+
+            for edge in next_edges[:3]:
+                if edge in board.activeEdges:
+                    side1.append(edge)
+
+            for edge in next_edges[3:]:
+                if edge in board.activeEdges:
+                    side2.append(edge)
+            
+            if len(side1) != 1 or len(side2) != 1 :
+                return False
+            
+            count_edges_cicle += 1
+
+            active_next_edges = side1 + side2
+            
+            for edge in active_next_edges:
+                if edge != previous_edge:
+                    previous_edge = current_edge
+                    current_edge = edge
+                    break
+                    
+            if current_edge == first_edge:
+                if count_edges_cicle == len(board.activeEdges):
+                    return True
+            
+        return False      
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -775,8 +778,8 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     board.pre_process()
     board.apply_advanced_rules()
-    problem = Slitherlink(board)
     
+    problem = Slitherlink(board)
     goal = depth_first_tree_search(problem)
     goal.state.board.print_board()
 
