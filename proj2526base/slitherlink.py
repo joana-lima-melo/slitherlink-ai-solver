@@ -191,11 +191,11 @@ class Board:
 
         #Bloquear o contorno do tabuleiro
 
-        for row in range(rows):
+        for row in range(-1, rows + 1):
             blockedEdges.add((row, -1, 'h'))
             blockedEdges.add((row, cols, 'h'))
-        
-        for col in range(cols):
+
+        for col in range(-1, cols + 1):
             blockedEdges.add((-1, col, 'v'))
             blockedEdges.add((rows, col, 'v'))
 
@@ -204,7 +204,7 @@ class Board:
     def print_board(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                edges_in_printing_order= (self.get_cell_edges(row, col)[1:], self.get_cell_edges(row, col)[3])
+                edges_in_printing_order= self.get_cell_edges(row, col)[1:]+ [self.get_cell_edges(row, col)[0]]
                 for edge in edges_in_printing_order:
                     if edge in self.activeEdges:
                         print('1', end='')
@@ -252,20 +252,8 @@ class Board:
                         self.blockedEdges.add(edge)
 
     def rule_cell_3_corner(self):
-        '''for row in range(self.rows):
-            for col in range(self.cols):
-                if self.grid[row][col] == '3':
-                    cell_edges = self.get_cell_edges(row, col)
-
-                    if (row-1, col, 'v') and (row,col-1, 'h') in self.blockedEdges or row == 0 or col == 0 :
-                        self.activeEdges.add((row, col, 'v'))
-                        self.activeEdges.add((row, col, 'h'))
-                    if (row+1, col-1, 'v') and (row,col+1, 'h') in self.blockedEdges or row == self.rows - 1 or col == self.cols - 1:
-                        self.activeEdges.add((row, col, 'v'))
-                        self.activeEdges.add((row, col + 1, 'h'))
-                        if edge not in self.blockedEdges:
-                            self.activeEdges.add(edge)
-        '''            
+        
+               
         if self.grid[0][0] == '3': 
             self.activeEdges.add((0, 0, 'h'))
             self.activeEdges.add((0, 0, 'v'))
@@ -620,7 +608,7 @@ class Board:
                                     self.activeEdges.add((row, col, 'h'))
 
                             elif d_row < row and d_col > col:
-                                d_diagonal_edges= (diagonal_edges[0], diagonal_edges[3])
+                                d_diagonal_edges= [diagonal_edges[0], diagonal_edges[3]]
                                 if all(edges in self.blockedEdges for edges in d_diagonal_edges):
                                     self.activeEdges.add((row, col + 1, 'v'))
                                     self.activeEdges.add((row, col, 'h'))
@@ -632,7 +620,7 @@ class Board:
                                     self.activeEdges.add((row + 1, col, 'h'))
 
                             elif d_row > row and d_col < col:
-                                d_diagonal_edges=(diagonal_edges[1], diagonal_edges[2])
+                                d_diagonal_edges= [diagonal_edges[1], diagonal_edges[2]]
                                 if all(edges in self.blockedEdges for edges in d_diagonal_edges):
                                     self.activeEdges.add((row, col, 'v'))
                                     self.activeEdges.add((row + 1, col, 'h'))
@@ -653,7 +641,7 @@ class Board:
                                     self.blockedEdges.add((row, col, 'h'))
 
                             elif d_row < row and d_col > col:
-                                d_diagonal_edges= (diagonal_edges[0], diagonal_edges[3])
+                                d_diagonal_edges= [diagonal_edges[0], diagonal_edges[3]]
                                 if all(edges in self.blockedEdges for edges in d_diagonal_edges):
                                     self.blockedEdges.add((row, col + 1, 'v'))
                                     self.blockedEdges.add((row, col, 'h'))
@@ -665,7 +653,7 @@ class Board:
                                     self.blockedEdges.add((row + 1, col, 'h'))
 
                             elif d_row > row and d_col < col:
-                                d_diagonal_edges=(diagonal_edges[1], diagonal_edges[2])
+                                d_diagonal_edges=[diagonal_edges[1], diagonal_edges[2]]
                                 if all(edges in self.blockedEdges for edges in d_diagonal_edges):
                                     self.blockedEdges.add((row, col, 'v'))
                                     self.blockedEdges.add((row + 1, col, 'h'))
@@ -685,13 +673,20 @@ class Slitherlink(Problem):
     def actions(self, state: SlitherlinkState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        state= state.board
+        board = state.board
 
+        # começar por arestas ativas
         for active_edge in board.activeEdges:
             next_to_active_edge = board.get_next_edges(active_edge[0], active_edge[1], active_edge[2])
             for edge in next_to_active_edge:
                 if edge not in board.activeEdges and edge not in board.blockedEdges:
                     return [("activate", edge), ("block", edge)]
+
+        # ver qualquer uma se ainda não houver arestas ativas
+        all_edges = board.get_all_horizontal_edges() + board.get_all_vertical_edges()
+        for edge in all_edges:
+            if edge not in board.activeEdges and edge not in board.blockedEdges:
+                return [("activate", edge), ("block", edge)]
 
         return []
 
@@ -784,11 +779,4 @@ if __name__ == "__main__":
     
     goal = depth_first_tree_search(problem)
     goal.state.board.print_board()
-
-
-
-
-
-
-
 
