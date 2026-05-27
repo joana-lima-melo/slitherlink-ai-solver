@@ -790,9 +790,7 @@ class Slitherlink(Problem):
 
 if __name__ == "__main__":
     board = Board.parse_instance()
-    board.pre_process()
-    board.apply_advanced_rules()
-    
+    board.pre_process()    
     problem = Slitherlink(board)
     goal = depth_first_tree_search(problem)
     goal.state.board.print_board()
