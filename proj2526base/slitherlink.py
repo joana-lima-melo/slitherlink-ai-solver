@@ -143,7 +143,20 @@ class Board:
 
 
         return res
-    
+
+    def get_next_cells(self, row: int, col: int, direction: str) -> list:
+        res = []
+
+        if direction == 'v':
+            res.append((row, col - 1)) #esquerda
+            res.append((row, col)) #direita
+
+        elif direction == 'h':
+            res.append((row - 1, col)) #cima
+            res.append((row, col)) #baixo
+
+        return res
+
     def get_all_vertical_edges(self) -> list:
         res = []
         for row in range(self.rows):
