@@ -282,6 +282,7 @@ class Board:
         for cell in next_cells:
             self.rule_complete_cell(cell)
             self.rule_general_blocked_edges_3_1(cell)
+            self.rule_avoid_square(cell)
 
         for e in next_edges:  
             if e in self.activeEdges:
@@ -290,7 +291,6 @@ class Board:
                 self.rule_block_adjacent_edges_corner(e)
                 self.rule_avoid_micro_cycle(e)     
             self.rule_dead_end(e)
-            self.rule_avoid_square(e)
 
         
     def search_0_or_3(self):
@@ -465,16 +465,17 @@ class Board:
             for impossible_edge in impossible_edges:
                 self.block_edge(impossible_edge)
 
-    def rule_avoid_square(self, edge: tuple):
-
+    def rule_avoid_square(self, cell: tuple):
         if self.rows == 1 and self.cols == 1:
             return
-        for cell in self.get_next_cells(edge[0], edge[1], edge[2]):
-            row, col = cell
-            if 0 <= row < self.rows and 0 <= col < self.cols:
-                if self.get_active_edges(row, col) == 3:
-                    for e in self.get_cell_edges(row, col):
-                        self.block_edge(e)
+        
+        row = cell[0]
+        col = cell[1]
+
+        if self.get_active_edges(row, col) == '3':
+            for edge in self.get_cell_edges(row, col):
+                if edge not in self.activate_edge:
+                    self.block_edge(edge)
 
     def rule_cell_1_corner(self):
         if self.grid[0][0] == '1': 
