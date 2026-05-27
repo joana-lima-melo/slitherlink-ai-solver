@@ -218,7 +218,6 @@ class Board:
         self.rule_cell_2_corner()
         self.rule_cell_1_corner()
         self.rule_adjacent_3()
-        self.rule_0_diagonal_3()
         self.rule_3_diagonal_3()
 
     def apply_advanced_rules(self):
@@ -464,58 +463,63 @@ class Board:
 
     def rule_avoid_micro_cycle(self):
         all_edges = self.get_all_horizontal_edges() + self.get_all_vertical_edges()
-        
+
         for edge in all_edges:
             if edge in self.activeEdges or edge in self.blockedEdges:
                 continue
 
             next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
 
-            side1 = None
-            side2 = None
+            start = None
+            for e in next_edges[:3]:
+                if e in self.activeEdges:
+                    start = e
+                    break
 
-            for possible_way in next_edges[:3]:
-                if possible_way in self.activeEdges:
-                    side1 = possible_way
+            target = None
+            for e in next_edges[3:]:
+                if e in self.activeEdges:
+                    target = e
+                    break
 
-            for possible_way in next_edges[3:]:
-                if possible_way in self.activeEdges:
-                    side2 = possible_way
-            
-            if side1 == None or side2 == None:
+            if start is None or target is None:
                 continue
 
-            visited = {edge}
-            current = side1
-            previous = edge
+            current, previous, visited = start, edge, {edge}
 
-            while current is not None and current not in visited:
+            for _ in range(len(self.activeEdges)):
                 visited.add(current)
-                next_current = None
-                for next_edge in self.get_next_edges(current[0], current[1], current[2]):
-                    if next_edge in self.activeEdges and next_edge != previous:
-                        next_current = next_edge
-                        break
-                previous = current
-                current = next_current
             
-            if current == side2 or side2 in visited:
-                if visited != self.activeEdges:
-                    self.blockedEdges.add(edge)
-                else:
-                    valid = True
-                    for row in range(self.rows):
-                        for col in range(self.cols):
-                            cellNumber = self.grid[row][col]
-                            if cellNumber == '.':
-                                continue
-                            if self.get_active_edges(row, col) != int(cellNumber):
-                                valid = False
-                                break
-                        if not valid:
+                next_step = None
+                for e in self.get_next_edges(current[0], current[1], current[2]):
+                    if e in self.activeEdges and e != previous:
+                        next_step = e
+                        break
+                        
+                previous = current
+                current = next_step
+                
+                if current is None or current in visited:
+                    break
+
+            if target not in visited:
+                continue
+
+            if visited - {edge} != self.activeEdges:
+                self.blockedEdges.add(edge)
+            else:
+
+                invalid_cells = False
+                for r in range(self.rows):
+                    for c in range(self.cols):
+                        if self.grid[r][c] != '.' and self.get_active_edges(r, c) != int(self.grid[r][c]):
+                            invalid_cells = True
                             break
-                    if not valid:
-                        self.blockedEdges.add(edge)                            
+                    if invalid_cells:
+                        break
+                        
+                if invalid_cells:
+                    self.blockedEdges.add(edge)           
 
     
     def rule_0_diagonal_3(self): # not needed if i change the rule_cell_3_corner to add the corner edges on any case where the adjacent edges to any cell edges are blocked 
@@ -591,71 +595,69 @@ class Board:
             self.activeEdges.add((self.rows - 2, 0, 'v'))
             self.activeEdges.add((self.rows, 1, 'h'))
 
+
     def rule_adjacent_blocked_edges_3(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.grid[row][col] == '3':
-                    if self.get_active_edges(row, col) != 3:
-                        for (d_row, d_col) in self.get_diagonal_cell((row, col)):
-                            
-                            diagonal_edges= self.get_cell_edges(row, col)
+                if self.grid[row][col] != '3' or self.get_active_edges(row, col) == 3:
+                    continue
+                for (d_row, d_col) in self.get_diagonal_cell((row, col)):
 
-                            if d_row < row and d_col < col:
-                                d_diagonal_edges= diagonal_edges[2:] 
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.activeEdges.add((row, col, 'h'))
+                    if d_row < row and d_col < col:     
+                        external = [(row-1, col, 'v'), (row, col-1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.activeEdges.add((row, col, 'v'))
+                            self.activeEdges.add((row, col, 'h'))
 
-                            elif d_row < row and d_col > col:
-                                d_diagonal_edges= [diagonal_edges[0], diagonal_edges[3]]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.activeEdges.add((row, col + 1, 'v'))
-                                    self.activeEdges.add((row, col, 'h'))
+                    elif d_row < row and d_col > col:
+                        external = [(row-1, col+1, 'v'), (row, col+1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.activeEdges.add((row, col+1, 'v'))
+                            self.activeEdges.add((row, col, 'h'))
 
-                            elif d_row > row and d_col > col:
-                                d_diagonal_edges= diagonal_edges[:2]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.activeEdges.add((row, col + 1, 'v'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
+                    elif d_row > row and d_col > col:
+                        external = [(row+1, col+1, 'v'), (row+1, col+1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.activeEdges.add((row, col+1, 'v'))
+                            self.activeEdges.add((row+1, col, 'h'))
 
-                            elif d_row > row and d_col < col:
-                                d_diagonal_edges= [diagonal_edges[1], diagonal_edges[2]]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
+                    elif d_row > row and d_col < col:
+                        external = [(row+1, col, 'v'), (row+1, col-1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.activeEdges.add((row, col, 'v'))
+                            self.activeEdges.add((row+1, col, 'h'))
+
 
     def rule_adjacent_blocked_edges_1(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.grid[row][col] == '1':
-                    if self.get_active_edges(row, col) != 1:
-                        for (d_row, d_col) in self.get_diagonal_cell((row, col)):
-                            
-                            diagonal_edges= self.get_cell_edges(row, col)
+                if self.grid[row][col] != '1' or self.get_active_edges(row, col) == 1:
+                    continue
+                for (d_row, d_col) in self.get_diagonal_cell((row, col)):
 
-                            if d_row < row and d_col < col:
-                                d_diagonal_edges= diagonal_edges[2:] 
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.blockedEdges.add((row, col, 'v'))
-                                    self.blockedEdges.add((row, col, 'h'))
+                    if d_row < row and d_col < col:
+                        external = [(row-1, col, 'v'), (row, col-1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.blockedEdges.add((row, col, 'v'))
+                            self.blockedEdges.add((row, col, 'h'))
 
-                            elif d_row < row and d_col > col:
-                                d_diagonal_edges= [diagonal_edges[0], diagonal_edges[3]]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.blockedEdges.add((row, col + 1, 'v'))
-                                    self.blockedEdges.add((row, col, 'h'))
+                    elif d_row < row and d_col > col:
+                        external = [(row-1, col+1, 'v'), (row, col+1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.blockedEdges.add((row, col+1, 'v'))
+                            self.blockedEdges.add((row, col, 'h'))
 
-                            elif d_row > row and d_col > col:
-                                d_diagonal_edges= diagonal_edges[:2]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.blockedEdges.add((row, col + 1, 'v'))
-                                    self.blockedEdges.add((row + 1, col, 'h'))
+                    elif d_row > row and d_col > col:
+                        external = [(row+1, col+1, 'v'), (row+1, col+1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.blockedEdges.add((row, col+1, 'v'))
+                            self.blockedEdges.add((row+1, col, 'h'))
 
-                            elif d_row > row and d_col < col:
-                                d_diagonal_edges=[diagonal_edges[1], diagonal_edges[2]]
-                                if all(edges in self.blockedEdges for edges in d_diagonal_edges):
-                                    self.blockedEdges.add((row, col, 'v'))
-                                    self.blockedEdges.add((row + 1, col, 'h'))
+                    elif d_row > row and d_col < col:
+                        external = [(row+1, col, 'v'), (row+1, col-1, 'h')]
+                        if all(e in self.blockedEdges for e in external):
+                            self.blockedEdges.add((row, col, 'v'))
+                            self.blockedEdges.add((row+1, col, 'h'))
 
         
 
