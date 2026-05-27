@@ -183,11 +183,11 @@ class Board:
 
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.grid[row][col] == 3:
+                if self.grid[row][col] == '3':
                     cell3.append((row, col))
-                elif self.grid[row][col] == 2:
+                elif self.grid[row][col] == '2':
                     cell2.append((row, col))
-                elif self.grid[row][col] == 1:
+                elif self.grid[row][col] == '1':
                     cell1.append((row, col))
                 else:
                     other.append((row, col)) 
@@ -472,10 +472,11 @@ class Board:
         row = cell[0]
         col = cell[1]
 
-        if self.get_active_edges(row, col) == '3':
+        if self.get_active_edges(row, col) == 3:
             for edge in self.get_cell_edges(row, col):
-                if edge not in self.activate_edge:
+                if edge not in self.activeEdges:
                     self.block_edge(edge)
+
 
     def rule_cell_1_corner(self):
         if self.grid[0][0] == '1': 
@@ -673,43 +674,46 @@ class Slitherlink(Problem):
                 if board.get_active_edges(row, col) != int(cellNumber):
                     return False
                 
-        first_edge = list(board.activeEdges)[0]
-        current_edge = first_edge  
-        previous_edge = None      
-        count_edges_cicle = 0
-        for _ in range(len(board.activeEdges)):
-            
-            next_edges = board.get_next_edges(current_edge[0], current_edge[1], current_edge[2])
+        first_edge = list(board.activeEdges)[0]     
+        
+        next_edges = board.get_next_edges(first_edge[0], first_edge[1], first_edge[2])
 
-            side1 = []
-            side2 =[]
+        start = None
+        end = None
 
-            for edge in next_edges[:3]:
-                if edge in board.activeEdges:
-                    side1.append(edge)
+        for edge in next_edges[:3]:
+            if edge in board.activeEdges:
+                start = edge
+                break
 
-            for edge in next_edges[3:]:
-                if edge in board.activeEdges:
-                    side2.append(edge)
-            
-            if len(side1) != 1 or len(side2) != 1 :
-                return False
-            
-            count_edges_cicle += 1
+        for edge in next_edges[3:]:
+            if edge in board.activeEdges:
+                end = edge
+                break
+        
+        current = start
+        previous = first_edge
+        visited = {first_edge}
 
-            active_next_edges = side1 + side2
-            
-            for edge in active_next_edges:
-                if edge != previous_edge:
-                    previous_edge = current_edge
-                    current_edge = edge
-                    break
-                    
-            if current_edge == first_edge:
-                if count_edges_cicle == len(board.activeEdges):
+        if start is not None and end is not None:
+            while current != end and current is not None:
+                visited.add(current)
+                next_current = None
+                next_edges = board.get_next_edges(current[0], current[1], current[2])
+                for edge in next_edges:
+                    if edge in board.activeEdges and edge != previous:
+                        next_current = edge
+                        break
+                
+                previous = current
+                current = next_current
+
+            visited.add(end)
+            if current == end:
+                if visited == board.activeEdges:
                     return True
-            
-        return False      
+
+        return False    
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
