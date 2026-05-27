@@ -472,15 +472,15 @@ class Board:
             next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
 
             start = None
-            for e in next_edges[:3]:
-                if e in self.activeEdges:
-                    start = e
+            for edge in next_edges[:3]:
+                if edge in self.activeEdges:
+                    start = edge
                     break
 
             target = None
-            for e in next_edges[3:]:
-                if e in self.activeEdges:
-                    target = e
+            for edge in next_edges[3:]:
+                if edge in self.activeEdges:
+                    target = edge
                     break
 
             if start is None or target is None:
@@ -492,9 +492,9 @@ class Board:
                 visited.add(current)
             
                 next_step = None
-                for e in self.get_next_edges(current[0], current[1], current[2]):
-                    if e in self.activeEdges and e != previous:
-                        next_step = e
+                for edge in self.get_next_edges(current[0], current[1], current[2]):
+                    if edge in self.activeEdges and edge != previous:
+                        next_step = edge
                         break
                         
                 previous = current
@@ -606,25 +606,25 @@ class Board:
 
                     if d_row < row and d_col < col:     
                         external = [(row-1, col, 'v'), (row, col-1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.activeEdges.add((row, col, 'v'))
                             self.activeEdges.add((row, col, 'h'))
 
                     elif d_row < row and d_col > col:
                         external = [(row-1, col+1, 'v'), (row, col+1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.activeEdges.add((row, col+1, 'v'))
                             self.activeEdges.add((row, col, 'h'))
 
                     elif d_row > row and d_col > col:
                         external = [(row+1, col+1, 'v'), (row+1, col+1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.activeEdges.add((row, col+1, 'v'))
                             self.activeEdges.add((row+1, col, 'h'))
 
                     elif d_row > row and d_col < col:
                         external = [(row+1, col, 'v'), (row+1, col-1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.activeEdges.add((row, col, 'v'))
                             self.activeEdges.add((row+1, col, 'h'))
 
@@ -638,25 +638,25 @@ class Board:
 
                     if d_row < row and d_col < col:
                         external = [(row-1, col, 'v'), (row, col-1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.blockedEdges.add((row, col, 'v'))
                             self.blockedEdges.add((row, col, 'h'))
 
                     elif d_row < row and d_col > col:
                         external = [(row-1, col+1, 'v'), (row, col+1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.blockedEdges.add((row, col+1, 'v'))
                             self.blockedEdges.add((row, col, 'h'))
 
                     elif d_row > row and d_col > col:
                         external = [(row+1, col+1, 'v'), (row+1, col+1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.blockedEdges.add((row, col+1, 'v'))
                             self.blockedEdges.add((row+1, col, 'h'))
 
                     elif d_row > row and d_col < col:
                         external = [(row+1, col, 'v'), (row+1, col-1, 'h')]
-                        if all(e in self.blockedEdges for e in external):
+                        if all(edge in self.blockedEdges for edge in external):
                             self.blockedEdges.add((row, col, 'v'))
                             self.blockedEdges.add((row+1, col, 'h'))
 
