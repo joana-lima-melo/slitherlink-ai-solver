@@ -280,11 +280,12 @@ class Board:
         next_cells = self.get_next_cells(edge[0], edge[1], edge[2])
             
         for cell in next_cells:
-            self.rule_complete_cell(cell)
-            self.rule_general_blocked_edges_3_1(cell)
-            self.rule_avoid_square(cell)
+            if 0 <= cell[0] < self.rows and 0 <= cell[1] < self.cols:
+                self.rule_complete_cell(cell)
+                self.rule_general_blocked_edges_3_1(cell)
+                self.rule_avoid_square(cell)
 
-        for e in next_edges:  
+        for e in next_edges: 
             if e in self.activeEdges:
                 self.rule_block_sides_continuous_line(e)
                 self.rule_only_one_possible_way(e)
@@ -613,7 +614,18 @@ class Board:
                             self.block_edge((row, col, 'v'))
                             self.block_edge((row+1, col, 'h'))
 
-        
+    def is_invalid(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                cellNumber = self.grid[row][col]
+                if cellNumber == '.':
+                    continue
+                if self.get_active_edges(row, col) > int(cellNumber):
+                    return True
+                if self.get_blocked_edges(row, col) > 4 - int(cellNumber):
+                    return True
+        return False
+    
 
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
@@ -631,18 +643,24 @@ class Slitherlink(Problem):
         board = state.board
 
         # começar por numeros do board[3,2,1,.]
+        if board.is_invalid():
+            return []
+
         for edge in board.get_numbers_board_order():
             if edge not in board.activeEdges and edge not in board.blockedEdges:
                 return [("activate", edge), ("block", edge)]
-        return[]
+        
+        return []
             
+    
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        new_state = copy.deepcopy(state)
-        new_board = new_state.board
+        board = state.board
+        new_board = Board(board.rows, board.cols, board.activeEdges.copy(), board.blockedEdges.copy(), board.grid)
+        new_state = SlitherlinkState(new_board)
 
         # Unpack the action we created in the actions() function
         action_type, edge = action
