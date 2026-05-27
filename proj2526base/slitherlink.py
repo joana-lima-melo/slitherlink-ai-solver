@@ -278,20 +278,11 @@ class Board:
 
         next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
         next_cells = self.get_next_cells(edge[0], edge[1], edge[2])
-
-        
             
         for cell in next_cells:
             self.rule_complete_cell(cell)
             self.rule_general_blocked_edges_3_1(cell)
 
-        for e in next_edges: 
-            self.rule_dead_end(e)
-            self.rule_only_one_possible_way(e)
-            self.rule_block_sides_continuous_line(e)
-            self.rule_block_adjacent_edges_corner(e)
-            self.rule_avoid_square(e)
-            self.rule_avoid_micro_cycle(e)
         for e in next_edges:  
             if e in self.activeEdges:
                 self.rule_block_sides_continuous_line(e)
