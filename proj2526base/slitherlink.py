@@ -218,14 +218,18 @@ class Board:
         self.rule_cell_2_corner()
         self.rule_cell_1_corner()
 
-    def apply_advanced_rules(self):
+    def propagate_edge(self):
+        
+        next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
+        cells= 
+        
 
         changed = True
 
         while changed:
             before_count = len(self.activeEdges) + len(self.blockedEdges)
 
-            self.rule_complete_cell()
+            self.rule_complete_cell(cells)
             self.rule_dead_end()
             self.rule_only_one_possible_way()
             self.rule_block_sides_continuous_line()
@@ -297,9 +301,8 @@ class Board:
             self.activeEdges.add((self.rows - 1, self.cols, 'v'))
 
                     
-    def rule_complete_cell(self):
-        for row in range(self.rows):
-            for col in range(self.cols):
+    def rule_complete_cell():
+                
                 cell_num = self.grid[row][col]
 
                 if cell_num == '.':
