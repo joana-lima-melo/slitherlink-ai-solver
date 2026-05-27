@@ -28,7 +28,6 @@ from search import (
 class SlitherlinkState:
     state_id = 0
 
-
     def __init__(self, board):
         self.board = board
         self.id = SlitherlinkState.state_id
