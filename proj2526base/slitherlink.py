@@ -173,14 +173,32 @@ class Board:
         
         return res
     
-    def get_numbers_board_oder(self) -> list:
-        res = []
+    def get_numbers_board_order(self) -> list:
+        order = set()
+
+        cell3 = []
+        cell2 = []
+        cell1 = []
+        other = []
+
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.grid[row][col] != '.':
-                    res.append((row, col))
-              
-        return res
+                if self.grid[row][col] == 3:
+                    cell3.append((row, col))
+                elif self.grid[row][col] == 2:
+                    cell2.append((row, col))
+                elif self.grid[row][col] == 1:
+                    cell1.append((row, col))
+                else:
+                    other.append((row, col)) 
+         
+        cell_order = cell3 + cell2 + cell1 + other
+        for cell in cell_order:
+            for e in self.get_cell_edges(cell[0], cell[1]):
+                order.add(e)
+        
+        return list(order)
+                                          
         
 
     @staticmethod
@@ -263,7 +281,6 @@ class Board:
                 self.rule_only_one_possible_way()
                 self.rule_block_sides_continuous_line()
                 self.rule_block_adjacent_edges_corner()
-                self.rule_block_remaining_cell_edges()
                 self.rule_avoid_square()
                 self.rule_avoid_micro_cycle()
             for e in next_edges:  
@@ -274,9 +291,7 @@ class Board:
                     self.rule_avoid_micro_cycle(e)     
                 self.rule_dead_end(e)
                 self.rule_avoid_square(e)
-                self.rule_adjacent_blocked_edges_3(e)
-                self.rule_adjacent_blocked_edges_1(e)
-                
+
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -685,21 +700,10 @@ class Slitherlink(Problem):
         partir do estado passado como argumento."""
         board = state.board
 
-        # começar por arestas ativas
-        for active_edge in board.activeEdges:
-            next_to_active_edge = board.get_next_edges(active_edge[0], active_edge[1], active_edge[2])
-            for edge in next_to_active_edge:
-                if edge not in board.activeEdges and edge not in board.blockedEdges:
-                    return [("activate", edge), ("block", edge)]
-
-        # ver qualquer uma se ainda não houver arestas ativas
-        all_edges = board.get_all_horizontal_edges() + board.get_all_vertical_edges()
-        for edge in all_edges:
-            if edge not in board.activeEdges and edge not in board.blockedEdges:
-                return [("activate", edge), ("block", edge)]
-
-        return []
-
+        # começar por numeros do board[3,2,1,.]
+        for edge in board.get_numbers_board_order():
+            return [("activate", edge), ("block", edge)]
+            
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
