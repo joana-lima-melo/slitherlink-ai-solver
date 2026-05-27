@@ -231,32 +231,15 @@ class Board:
         self.rule_cell_2_corner()
         self.rule_cell_1_corner()
 
-<<<<<<< Updated upstream
-    def apply_advanced_rules(self):
-=======
     def apply_advanced_rules(self, edge):
 
         next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
         next_cells = self.get_next_cells(edge[0], edge[1], edge[2])
->>>>>>> Stashed changes
 
         changed = True
 
         while changed:
             before_count = len(self.activeEdges) + len(self.blockedEdges)
-<<<<<<< Updated upstream
-
-            self.rule_complete_cell()
-            self.rule_dead_end()
-            self.rule_only_one_possible_way()
-            self.rule_block_sides_continuous_line()
-            self.rule_block_adjacent_edges_corner()
-            self.rule_block_remaining_cell_edges()
-            self.rule_avoid_square()
-            self.rule_adjacent_blocked_edges_3()
-            self.rule_adjacent_blocked_edges_1()
-            self.rule_avoid_micro_cycle()
-=======
             
             for cell in next_cells:
                 self.rule_complete_cell(cell)
@@ -272,7 +255,6 @@ class Board:
                 self.rule_adjacent_blocked_edges_3(e)
                 self.rule_adjacent_blocked_edges_1(e)
                 
->>>>>>> Stashed changes
             
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
@@ -334,21 +316,6 @@ class Board:
             self.activeEdges.add((self.rows, self. cols - 1, 'h'))
             self.activeEdges.add((self.rows - 1, self.cols, 'v'))
 
-<<<<<<< Updated upstream
-                    
-    def rule_complete_cell(self):
-        for row in range(self.rows):
-            for col in range(self.cols):
-                cell_num = self.grid[row][col]
-
-                if cell_num == '.':
-                    continue
-                
-                if self.get_blocked_edges(row, col) == 4 - int(cell_num):
-                    for edge in self.get_cell_edges(row, col):
-                        if edge not in self.blockedEdges:
-                            self.activeEdges.add(edge)
-=======
 
     def rule_complete_cell(self, cell: tuple):
         row = cell[0]
@@ -368,7 +335,6 @@ class Board:
                         self.blockedEdges.add(edge)
                         self.apply_advanced_rules(edge)
         
->>>>>>> Stashed changes
                     
 
     def rule_dead_end(self):
