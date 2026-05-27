@@ -213,12 +213,10 @@ class Board:
             print('\n', end='')
     
     def pre_process(self):
-        self.rule_cell_0()
+        self.search_0_or_3()
         self.rule_cell_3_corner()
         self.rule_cell_2_corner()
         self.rule_cell_1_corner()
-        self.rule_adjacent_3()
-        self.rule_3_diagonal_3()
 
     def apply_advanced_rules(self):
 
@@ -241,13 +239,43 @@ class Board:
             after_count = len(self.activeEdges) + len(self.blockedEdges)
             changed = (before_count != after_count)
 
-    def rule_cell_0(self):
+    
+    def search_0_or_3(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 if self.grid[row][col] == '0':
                     cell_edges = self.get_cell_edges(row, col)
                     for edge in cell_edges:
                         self.blockedEdges.add(edge)
+
+                
+                elif self.grid[row][col] == '3':
+                    for (cell_row, cell_col) in self.adjacent_cell((row, col))[:2]: #adjacentes
+                            if self.grid[cell_row][cell_col] == '3':
+                                if col == cell_col: #cima
+                                    self.activeEdges.add((cell_row, col, 'h'))
+                                    self.activeEdges.add((row, col, 'h'))
+                                    self.activeEdges.add((row + 1, col, 'h'))
+                                
+                                elif row == cell_row: #direita
+                                    self.activeEdges.add((row, cell_col, 'v'))
+                                    self.activeEdges.add((row, col, 'v'))
+                                    self.activeEdges.add((row, col + 1, 'v'))
+                                    
+                    for (d_row, d_col) in self.get_diagonal_cell((row, col))[:2]: #diagonais
+                            if self.grid[d_row][d_col] == '3':
+                                if d_col < col:
+                                    self.activeEdges.add((row, col + 1, 'v'))
+                                    self.activeEdges.add((row + 1, col, 'h'))
+                                    self.activeEdges.add((d_row, d_col, 'v'))
+                                    self.activeEdges.add((d_row, d_col, 'h'))
+
+                                else:
+                                    self.activeEdges.add((row, col, 'v'))
+                                    self.activeEdges.add((row + 1, col, 'h'))
+                                    self.activeEdges.add((d_row, d_col + 1, 'v'))
+                                    self.activeEdges.add((d_row, d_col, 'h'))
+
 
     def rule_cell_3_corner(self):
         
@@ -267,6 +295,7 @@ class Board:
         if self.grid[self.rows - 1][self.cols - 1] == '3':
             self.activeEdges.add((self.rows, self. cols - 1, 'h'))
             self.activeEdges.add((self.rows - 1, self.cols, 'v'))
+
                     
     def rule_complete_cell(self):
         for row in range(self.rows):
@@ -309,32 +338,6 @@ class Board:
                 self.blockedEdges.add(horizontal)
                 continue
 
-
-    def rule_adjacent_3(self):
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.grid[row][col] == '3':
-                    for (cell_row, cell_col) in self.adjacent_cell((row, col)):
-                        if self.grid[cell_row][cell_col] == '3':
-                            if row == cell_row:
-                                if col > cell_col:
-                                    self.activeEdges.add((row, cell_col, 'v'))
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.activeEdges.add((row, col + 1, 'v'))
-                                else:
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.activeEdges.add((row, cell_col, 'v'))
-                                    self.activeEdges.add((row, cell_col + 1, 'v'))
-
-                            elif col == cell_col:
-                                if row > cell_row:
-                                    self.activeEdges.add((cell_row, col, 'h'))
-                                    self.activeEdges.add((row, col, 'h'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
-                                else:
-                                    self.activeEdges.add((row, col, 'h'))
-                                    self.activeEdges.add((cell_row, col, 'h'))
-                                    self.activeEdges.add((cell_row + 1, col, 'h'))
     
 
     def rule_only_one_possible_way(self):
@@ -520,62 +523,6 @@ class Board:
                         
                 if invalid_cells:
                     self.blockedEdges.add(edge)           
-
-    
-    def rule_0_diagonal_3(self): # not needed if i change the rule_cell_3_corner to add the corner edges on any case where the adjacent edges to any cell edges are blocked 
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.grid[row][col] == '3':
-                    for (d_row, d_col) in self.get_diagonal_cell((row, col)):
-                        if self.grid[d_row][d_col] == '0':
-                            
-                            if d_row < row and d_col < col:
-                                self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row, col, 'h'))
-
-                            elif d_row < row and d_col > col:
-                                self.activeEdges.add((row, col + 1, 'v'))
-                                self.activeEdges.add((row, col, 'h'))
-
-                            elif d_row > row and d_col > col:
-                                self.activeEdges.add((row, col + 1, 'v'))
-                                self.activeEdges.add((row + 1, col, 'h'))
-
-                            elif d_row > row and d_col < col:
-                                self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row + 1, col, 'h'))
-
-
-    def rule_3_diagonal_3(self):
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.grid[row][col] == '3':
-                    for (d_row, d_col) in self.get_diagonal_cell((row, col)):
-                        if self.grid[d_row][d_col] == '3':
-                            
-                            if d_row < row and d_col < col:
-                                self.activeEdges.add((row, col + 1, 'v'))
-                                self.activeEdges.add((row + 1, col, 'h'))
-                                self.activeEdges.add((d_row, d_col, 'v'))
-                                self.activeEdges.add((d_row, d_col, 'h'))
-
-                            elif d_row < row and d_col > col:
-                                self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row + 1, col, 'h'))
-                                self.activeEdges.add((d_row, d_col + 1, 'v'))
-                                self.activeEdges.add((d_row, d_col, 'h'))
-
-                            elif d_row > row and d_col > col:
-                                self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row, col, 'h'))
-                                self.activeEdges.add((d_row, d_col  + 1, 'v'))
-                                self.activeEdges.add((d_row + 1, d_col, 'h'))
-
-                            elif d_row > row and d_col < col:
-                                self.activeEdges.add((d_row, d_col + 1, 'v'))
-                                self.activeEdges.add((d_row, d_col, 'h'))
-                                self.activeEdges.add((row, col, 'v'))
-                                self.activeEdges.add((row + 1, col, 'h'))                                       
 
 
     def rule_cell_2_corner(self): # good but i should do also do one for the edges, or just like blocked adjacent
