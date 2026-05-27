@@ -173,8 +173,8 @@ class Board:
         
         return res
     
+    
     def get_numbers_board_order(self) -> list:
-        order = set()
 
         cell3 = []
         cell2 = []
@@ -193,13 +193,28 @@ class Board:
                     other.append((row, col)) 
          
         cell_order = cell3 + cell2 + cell1 + other
+        order = []
+        seen = set()
         for cell in cell_order:
             for e in self.get_cell_edges(cell[0], cell[1]):
-                order.add(e)
+                if e not in seen:
+                    seen.add(e)
+                    order.append(e)
+        return order
+
+
+    def activate_edge(self, edge: tuple):
         
-        return list(order)
-                                          
-        
+        if edge not in self.activeEdges and edge not in self.blockedEdges:
+            self.activeEdges.add(edge)
+            self.apply_advanced_rules(edge)
+
+    def block_edge(self, edge: tuple):
+
+        if edge not in self.activeEdges and edge not in self.blockedEdges:
+            self.blockedEdges.add(edge)
+            self.apply_advanced_rules(edge)
+
 
     @staticmethod
     def parse_instance():
@@ -264,116 +279,83 @@ class Board:
         next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
         next_cells = self.get_next_cells(edge[0], edge[1], edge[2])
 
-        changed = True
-
-        while changed:
-            before_count = len(self.activeEdges) + len(self.blockedEdges)
+        
             
-            for cell in next_cells:
-                self.rule_complete_cell(cell)
+        for cell in next_cells:
+            self.rule_complete_cell(cell)
+            self.rule_general_blocked_edges_3_1(cell)
 
-            for cell in  next_cells:
-                self.rule_complete_cell(cell)
-                self.rule_general_blocked_edges_3_1(cell)
+        for e in next_edges: 
+            self.rule_dead_end(e)
+            self.rule_only_one_possible_way(e)
+            self.rule_block_sides_continuous_line(e)
+            self.rule_block_adjacent_edges_corner(e)
+            self.rule_avoid_square(e)
+            self.rule_avoid_micro_cycle(e)
+        for e in next_edges:  
+            if e in self.activeEdges:
+                self.rule_block_sides_continuous_line(e)
+                self.rule_only_one_possible_way(e)
+                self.rule_block_adjacent_edges_corner(e)
+                self.rule_avoid_micro_cycle(e)     
+            self.rule_dead_end(e)
+            self.rule_avoid_square(e)
 
-            for e in next_edges: 
-                self.rule_dead_end(e)
-                self.rule_only_one_possible_way()
-                self.rule_block_sides_continuous_line()
-                self.rule_block_adjacent_edges_corner()
-                self.rule_avoid_square()
-                self.rule_avoid_micro_cycle()
-            for e in next_edges:  
-                if e in self.activeEdges:
-                    self.rule_block_sides_continuous_line(e)
-                    self.rule_only_one_possible_way(e)
-                    self.rule_block_adjacent_edges_corner(e)
-                    self.rule_avoid_micro_cycle(e)     
-                self.rule_dead_end(e)
-                self.rule_avoid_square(e)
-
-            
-            after_count = len(self.activeEdges) + len(self.blockedEdges)
-            changed = (before_count != after_count)
-
-    
+        
     def search_0_or_3(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 if self.grid[row][col] == '0':
                     cell_edges = self.get_cell_edges(row, col)
                     for edge in cell_edges:
-                        self.blockedEdges.add(edge)
-
-                
+                        self.block_edge(edge)
+             
                 elif self.grid[row][col] == '3':
                     for (cell_row, cell_col) in self.adjacent_cell((row, col))[:2]: #adjacentes
                             if self.grid[cell_row][cell_col] == '3':
                                 if col == cell_col: #cima
-                                    self.activeEdges.add((cell_row, col, 'h'))
-                                    self.apply_advanced_rules((cell_row, col, 'h'))
-                                    self.activeEdges.add((row, col, 'h'))
-                                    self.apply_advanced_rules((row, col, 'h'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
-                                    self.apply_advanced_rules((row + 1, col, 'h'))
+                                    self.activate_edge((cell_row, col, 'h'))
+                                    self.activate_edge((row, col, 'h'))
+                                    self.activate_edge((row + 1, col, 'h'))
 
                                 elif row == cell_row: #direita
-                                    self.activeEdges.add((row, cell_col, 'v'))
-                                    self.apply_advanced_rules((row, cell_col, 'v'))
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.apply_advanced_rules((row, col, 'v'))
-                                    self.activeEdges.add((row, col + 1, 'v'))
-                                    self.apply_advanced_rules((row, col + 1, 'v'))
+                                    self.activate_edge((row, cell_col, 'v'))
+                                    self.activate_edge((row, col, 'v'))
+                                    self.activate_edge((row, col + 1, 'v'))
                                     
                     for (d_row, d_col) in self.get_diagonal_cell((row, col))[:2]: #diagonais
                             if self.grid[d_row][d_col] == '3':
                                 if d_col < col:
-                                    self.activeEdges.add((row, col + 1, 'v'))
-                                    self.apply_advanced_rules((row, col + 1, 'v'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
-                                    self.apply_advanced_rules((row + 1, col, 'h'))
-                                    self.activeEdges.add((d_row, d_col, 'v'))
-                                    self.apply_advanced_rules((d_row, d_col, 'v'))
-                                    self.activeEdges.add((d_row, d_col, 'h'))
-                                    self.apply_advanced_rules((d_row, d_col, 'h'))
+                                    self.activate_edge((row, col + 1, 'v'))
+                                    self.activate_edge((row + 1, col, 'h'))
+                                    self.activate_edge((d_row, d_col, 'v'))
+                                    self.activate_edge((d_row, d_col, 'h'))
 
                                 else:
-                                    self.activeEdges.add((row, col, 'v'))
-                                    self.apply_advanced_rules((row, col, 'v'))
-                                    self.activeEdges.add((row + 1, col, 'h'))
-                                    self.apply_advanced_rules((row + 1, col, 'h'))
-                                    self.activeEdges.add((d_row, d_col + 1, 'v'))
-                                    self.apply_advanced_rules((d_row, d_col + 1, 'v'))
-                                    self.activeEdges.add((d_row, d_col, 'h'))
-                                    self.apply_advanced_rules((d_row, d_col, 'h'))
+                                    self.activate_edge((row, col, 'v'))
+                                    self.activate_edge((row + 1, col, 'h'))
+                                    self.activate_edge((d_row, d_col + 1, 'v'))
+                                    self.activate_edge((d_row, d_col, 'h'))
 
 
     def rule_cell_3_corner(self):
         
                
         if self.grid[0][0] == '3': 
-            self.activeEdges.add((0, 0, 'h'))
-            self.apply_advanced_rules((0, 0, 'h'))
-            self.activeEdges.add((0, 0, 'v'))
-            self.apply_advanced_rules((0, 0, 'v'))
+            self.activate_edge((0, 0, 'h'))
+            self.activate_edge((0, 0, 'v'))
         
         if self.grid[0][self.cols - 1] == '3':
-            self.activeEdges.add((0, self.cols - 1, 'h'))
-            self.apply_advanced_rules((0, self.cols - 1, 'h'))
-            self.activeEdges.add((0, self.cols, 'v'))
-            self.apply_advanced_rules((0, self.cols, 'v'))
+            self.activate_edge((0, self.cols - 1, 'h'))
+            self.activate_edge((0, self.cols, 'v'))
 
         if self.grid[self.rows - 1][0] == '3':
-            self.activeEdges.add((self.rows, 0, 'h'))
-            self.apply_advanced_rules((self.rows, 0, 'h'))
-            self.activeEdges.add((self.rows - 1, 0, 'v'))
-            self.apply_advanced_rules((self.rows - 1, 0, 'v'))
+            self.activate_edge((self.rows, 0, 'h'))
+            self.activate_edge((self.rows - 1, 0, 'v'))
         
         if self.grid[self.rows - 1][self.cols - 1] == '3':
-            self.activeEdges.add((self.rows, self. cols - 1, 'h'))
-            self.apply_advanced_rules((self.rows, self. cols - 1, 'h'))
-            self.activeEdges.add((self.rows - 1, self.cols, 'v'))
-            self.apply_advanced_rules((self.rows - 1, self.cols, 'v'))
+            self.activate_edge((self.rows, self. cols - 1, 'h'))
+            self.activate_edge((self.rows - 1, self.cols, 'v'))
 
 
     def rule_complete_cell(self, cell: tuple):
@@ -384,44 +366,35 @@ class Board:
         if cell_num != '.':
             if self.get_blocked_edges(row, col) == 4 - int(cell_num):
                 for edge in self.get_cell_edges(row, col):
-                    if edge not in self.blockedEdges:
-                        self.activeEdges.add(edge)
-                        self.apply_advanced_rules(edge)
+                    self.activate_edge(edge)
             
             elif self.get_active_edges(row, col) == int(cell_num):
                 for edge in self.get_cell_edges(row, col):
-                    if edge not in self.activeEdges:
-                        self.blockedEdges.add(edge)
-                        self.apply_advanced_rules(edge)
-        
+                    self.block_edge(edge)      
                     
 
-    def rule_dead_end(self, edge):
-        if edge[3] == 'v':
+    def rule_dead_end(self, edge: tuple):
+        if edge[2] == 'v':
             row = edge[0]
             col = edge[1]
             next_edges = self.get_next_edges(row, col, 'v')
 
             if all(x in self.blockedEdges for x in next_edges[:3]):
-                self.blockedEdges.add(edge)
-                self.apply_advanced_rules(edge)
+                self.block_edge(edge)
                 
             if all(x in self.blockedEdges for x in next_edges[3:]):
-                self.blockedEdges.add(edge)
-                self.apply_advanced_rules(edge)
+                self.block_edge(edge)
                 
-        if edge[3] == 'h':
+        if edge[2] == 'h':
             row = edge[0]
             col = edge[1]
             next_edges = self.get_next_edges(row, col, 'h')
 
             if all(x in self.blockedEdges for x in next_edges[:3]):
-                self.blockedEdges.add(edge)
-                self.apply_advanced_rules(edge)
+                self.block_edge(edge)
                 
             if all(x in self.blockedEdges for x in next_edges[3:]):
-                self.blockedEdges.add(edge)
-                self.apply_advanced_rules(edge)
+                self.block_edge(edge)
             
 
     def rule_only_one_possible_way(self, edge:tuple):
@@ -437,8 +410,7 @@ class Board:
                 possible_ways.append(adjacent_edge)
         
         if len(possible_ways) == 1:
-            self.activeEdges.add(possible_ways[0])
-            self.apply_advanced_rules(possible_ways[0])
+            self.activate_edge(possible_ways[0])
 
         second_edge_side = self.get_next_edges(edge[0], edge[1], edge[2])[3:]
         possible_ways = []
@@ -452,11 +424,10 @@ class Board:
                 possible_ways.append(adjacent_edge)
         
         if len(possible_ways) == 1:
-            self.activeEdges.add(possible_ways[0])
-            self.apply_advanced_rules(possible_ways[0])
+            self.activate_edge(possible_ways[0])
 
 
-    def rule_block_sides_continuous_line(self, edge):
+    def rule_block_sides_continuous_line(self, edge: tuple):
         next_edges = self.get_next_edges(edge[0], edge[1], edge[2])
 
         if edge[2] == 'h':
@@ -465,18 +436,14 @@ class Board:
                     if adjacent_edge in self.activeEdges:
                         if edge[1] > adjacent_edge[1]:
                             if edge[0] < self.rows - 1:
-                                self.blockedEdges.add((edge[0], edge[1], 'v'))
-                                self.apply_advanced_rules((edge[0], edge[1], 'v'))
+                                self.block_edge((edge[0], edge[1], 'v'))
                             if edge[0] > 0:
-                                self.blockedEdges.add((edge[0] - 1, edge[1], 'v'))
-                                self.apply_advanced_rules((edge[0] - 1, edge[1], 'v'))
+                                self.block_edge((edge[0] - 1, edge[1], 'v'))
                         else:
                             if edge[0] < self.rows - 1:
-                                self.blockedEdges.add((edge[0], adjacent_edge[1], 'v'))
-                                self.apply_advanced_rules((edge[0], adjacent_edge[1], 'v'))
+                                self.block_edge((edge[0], adjacent_edge[1], 'v'))
                             if edge[0] > 0:
-                                self.blockedEdges.add((edge[0] - 1, adjacent_edge[1], 'v'))
-                                self.apply_advanced_rules((edge[0] - 1, adjacent_edge[1], 'v'))
+                                self.block_edge((edge[0] - 1, adjacent_edge[1], 'v'))
 
         elif edge[2] == 'v':
             for adjacent_edge in next_edges:
@@ -484,21 +451,16 @@ class Board:
                     if adjacent_edge in self.activeEdges:
                         if edge[0] > adjacent_edge[0]:
                             if edge[1] < self.cols - 1:
-                                self.blockedEdges.add((edge[0], edge[1], 'h'))
-                                self.apply_advanced_rules((edge[0], edge[1], 'h'))
+                                self.block_edge((edge[0], edge[1], 'h'))
                             if edge[1] > 0:
-                                self.blockedEdges.add((edge[0], edge[1] - 1, 'h'))
-                                self.apply_advanced_rules((edge[0], edge[1] - 1, 'h'))
+                                self.block_edge((edge[0], edge[1] - 1, 'h'))
                         else:
                             if edge[1] < self.cols - 1:
-                                self.blockedEdges.add((adjacent_edge[0], edge[1], 'h'))
-                                self.apply_advanced_rules((adjacent_edge[0], edge[1], 'h'))
+                                self.block_edge((adjacent_edge[0], edge[1], 'h'))
                             if edge[1] > 0:
-                                self.blockedEdges.add((adjacent_edge[0], edge[1] - 1, 'h'))
-                                self.apply_advanced_rules((adjacent_edge[0], edge[1] - 1, 'h'))
-    
+                                self.block_edge((adjacent_edge[0], edge[1] - 1, 'h'))    
 
-    def rule_block_adjacent_edges_corner(self, edge):
+    def rule_block_adjacent_edges_corner(self, edge: tuple):
         perpendicular_active_edges = self.get_next_edges(edge[0], edge[1], edge[2])
 
         for adjacent_edge in list(perpendicular_active_edges):
@@ -510,40 +472,35 @@ class Board:
             next_edges2 = set(self.get_next_edges(edge2[0], edge2[1], edge2[2])) 
             impossible_edges = next_edges1 & next_edges2 # interceta
             for impossible_edge in impossible_edges:
-                self.blockedEdges.add(impossible_edge)
-                self.apply_advanced_rules(impossible_edge)
-    
+                self.block_edge(impossible_edge)
 
     def rule_avoid_square(self, edge: tuple):
+
         if self.rows == 1 and self.cols == 1:
             return
-
-        row = edge[0]
-        col = edge[1]
-        
-        if self.get_active_edges(row, col) == 3:
-            for e in self.get_cell_edges(row, col):
-                if e not in self.activeEdges:
-                    self.blockedEdges.add(e)
-                    self.apply_advanced_rules(e)
-
+        for cell in self.get_next_cells(edge[0], edge[1], edge[2]):
+            row, col = cell
+            if 0 <= row < self.rows and 0 <= col < self.cols:
+                if self.get_active_edges(row, col) == 3:
+                    for e in self.get_cell_edges(row, col):
+                        self.block_edge(e)
 
     def rule_cell_1_corner(self):
         if self.grid[0][0] == '1': 
-            self.blockedEdges.add((0, 0, 'h'))
-            self.blockedEdges.add((0, 0, 'v'))
+            self.block_edge((0, 0, 'h'))
+            self.block_edge((0, 0, 'v'))
         
         if self.grid[0][self.cols - 1] == '1':
-            self.blockedEdges.add((0, self.cols - 1, 'h'))
-            self.blockedEdges.add((0, self.cols, 'v'))
+            self.block_edge((0, self.cols - 1, 'h'))
+            self.block_edge((0, self.cols, 'v'))
 
         if self.grid[self.rows - 1][0] == '1':
-            self.blockedEdges.add((self.rows, 0, 'h'))
-            self.blockedEdges.add((self.rows - 1, 0, 'v'))
+            self.block_edge((self.rows, 0, 'h'))
+            self.block_edge((self.rows - 1, 0, 'v'))
         
         if self.grid[self.rows - 1][self.cols - 1] == '1':
-            self.blockedEdges.add((self.rows, self. cols - 1, 'h'))
-            self.blockedEdges.add((self.rows - 1, self.cols, 'v'))
+            self.block_edge((self.rows, self. cols - 1, 'h'))
+            self.block_edge((self.rows - 1, self.cols, 'v'))
     
 
     def rule_avoid_micro_cycle(self, edge: tuple):
@@ -580,10 +537,8 @@ class Board:
             current = next_current
             
         if target in visited:
-            if visited != self.activeEdges + {edge}:
-                self.blockedEdges.add(edge)
-                self.apply_advanced_rules(edge)
-            
+            if visited != self.activeEdges | {edge}:
+                self.block_edge(edge)            
             else:
                 valid = True
                 for row in range(self.rows):
@@ -597,29 +552,27 @@ class Board:
                     if not valid:
                         break
                 if not valid:
-                    self.blockedEdges.add(edge)  
-                    self.apply_advanced_rules(edge)        
-
+                    self.block_edge(edge)  
 
     def rule_cell_2_corner(self): 
         if self.grid[0][0] == '2':
-            self.activeEdges.add((1, 0, 'v'))
-            self.activeEdges.add((0, 1, 'h'))
+            self.activate_edge((1, 0, 'v'))
+            self.activate_edge((0, 1, 'h'))
 
         if self.grid[0][self.cols - 1] == '2':
-            self.activeEdges.add((1, self.cols, 'v'))
-            self.activeEdges.add((0, self.cols - 2, 'h'))
+            self.activate_edge((1, self.cols, 'v'))
+            self.activate_edge((0, self.cols - 2, 'h'))
 
         if self.grid[self.rows - 1][self.cols - 1] == '2':
-            self.activeEdges.add((self.rows - 2, self.cols, 'v'))
-            self.activeEdges.add((self.rows, self.cols - 2, 'h'))
+            self.activate_edge((self.rows - 2, self.cols, 'v'))
+            self.activate_edge((self.rows, self.cols - 2, 'h'))
 
         if self.grid[self.rows - 1][0] == '2':
-            self.activeEdges.add((self.rows - 2, 0, 'v'))
-            self.activeEdges.add((self.rows, 1, 'h'))
+            self.activate_edge((self.rows - 2, 0, 'v'))
+            self.activate_edge((self.rows, 1, 'h'))
 
 
-    def rule_general_blocked_edges_3_1(self, cell):
+    def rule_general_blocked_edges_3_1(self, cell: tuple):
         row= cell[0]
         col = cell[1]
         
@@ -631,57 +584,41 @@ class Board:
         
                     if all(edge in self.blockedEdges for edge in external):
                         if self.grid[row][col] == '3':
-                            self.activeEdges.add((row, col, 'v'))
-                            self.apply_advanced_rules((row, col, 'v'))
-                            self.activeEdges.add((row, col, 'h'))
-                            self.apply_advanced_rules((row, col, 'h'))
+                            self.activate_edge((row, col, 'v'))
+                            self.activate_edge((row, col, 'h'))
                         if self.grid[row][col] == '1':
-                            self.blockedEdges.add((row, col, 'v'))
-                            self.apply_advanced_rules((row, col, 'v'))
-                            self.blockedEdges.add((row, col, 'h'))
-                            self.apply_advanced_rules((row, col, 'h'))
+                            self.block_edge((row, col, 'v'))
+                            self.block_edge((row, col, 'h'))
 
                 elif d_row < row and d_col > col:
                     external = [(row-1, col+1, 'v'), (row, col+1, 'h')]
                     if all(edge in self.blockedEdges for edge in external):
                         if self.grid[row][col] == '3':
-                            self.activeEdges.add((row, col+1, 'v'))
-                            self.apply_advanced_rules((row, col+1, 'v'))
-                            self.activeEdges.add((row, col, 'h'))
-                            self.apply_advanced_rules((row, col, 'h'))
+                            self.activate_edge((row, col+1, 'v'))
+                            self.activate_edge((row, col, 'h'))
                         if self.grid[row][col] == '1':
-                            self.blockedEdges.add((row, col+1, 'v'))
-                            self.apply_advanced_rules((row, col+1, 'v'))
-                            self.blockedEdges.add((row, col, 'h'))
-                            self.apply_advanced_rules((row, col, 'h'))
+                            self.block_edge((row, col+1, 'v'))
+                            self.block_edge((row, col, 'h'))
 
                 elif d_row > row and d_col > col:
                     external = [(row+1, col+1, 'v'), (row+1, col+1, 'h')]
                     if all(edge in self.blockedEdges for edge in external):
                         if self.grid[row][col] == '3':
-                            self.activeEdges.add((row, col+1, 'v'))
-                            self.apply_advanced_rules((row, col+1, 'v'))
-                            self.activeEdges.add((row+1, col, 'h'))
-                            self.apply_advanced_rules((row+1, col, 'h'))
+                            self.activate_edge((row, col+1, 'v'))
+                            self.activate_edge((row+1, col, 'h'))
                         if self.grid[row][col] == '1':
-                            self.blockedEdges.add((row, col+1, 'v'))
-                            self.apply_advanced_rules((row, col+1, 'v'))
-                            self.blockedEdges.add((row+1, col, 'h'))
-                            self.apply_advanced_rules((row+1, col, 'h'))
+                            self.block_edge((row, col+1, 'v'))
+                            self.block_edge((row+1, col, 'h'))
 
                 elif d_row > row and d_col < col:
                     external = [(row+1, col, 'v'), (row+1, col-1, 'h')]
                     if all(edge in self.blockedEdges for edge in external):
                         if self.grid[row][col] == '3':
-                            self.activeEdges.add((row, col, 'v'))
-                            self.apply_advanced_rules((row, col, 'v'))
-                            self.activeEdges.add((row+1, col, 'h'))
-                            self.apply_advanced_rules((row+1, col, 'h'))
+                            self.activate_edge((row, col, 'v'))
+                            self.activate_edge((row+1, col, 'h'))
                         if self.grid[row][col] == '1':
-                            self.blockedEdges.add((row, col, 'v'))
-                            self.apply_advanced_rules((row, col, 'v'))
-                            self.blockedEdges.add((row+1, col, 'h'))
-                            self.apply_advanced_rules((row+1, col, 'h'))
+                            self.block_edge((row, col, 'v'))
+                            self.block_edge((row+1, col, 'h'))
 
         
 
@@ -702,7 +639,9 @@ class Slitherlink(Problem):
 
         # começar por numeros do board[3,2,1,.]
         for edge in board.get_numbers_board_order():
-            return [("activate", edge), ("block", edge)]
+            if edge not in board.activeEdges and edge not in board.blockedEdges:
+                return [("activate", edge), ("block", edge)]
+        return[]
             
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -721,7 +660,7 @@ class Slitherlink(Problem):
         elif action_type == "block":
             new_board.blockedEdges.add(edge)
 
-        new_board.apply_advanced_rules() 
+        new_board.apply_advanced_rules(edge) 
 
         return new_state
 
