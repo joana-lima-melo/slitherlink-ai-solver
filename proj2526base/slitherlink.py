@@ -36,7 +36,7 @@ class SlitherlinkState:
     def __lt__(self, other):
         return self.id < other.id
 
-    # TODO: outros metodos da classe
+    # TODO: 
 
 class Board:
     """Representação interna de um tabuleiro de Slitherlink."""
@@ -87,11 +87,9 @@ class Board:
 
         res = []
 
-        if cell[0] > 0 and cell[1] > 0:
-            res.append((cell[0] - 1, cell[1] - 1))
+        upper_diagonals = self.get_upper_diagonal_cell(cell)
         
-        if cell[0] > 0 and cell[1] < self.cols - 1:
-            res.append((cell[0] - 1, cell[1] + 1))
+        res.extend(upper_diagonals)
         
         if cell[0] < self.rows - 1 and cell[1] < self.cols - 1:
             res.append((cell[0] + 1, cell[1] + 1))
@@ -142,32 +140,7 @@ class Board:
         
         return res
     
-    def get_next_edges(self, row: int, col: int, direction: str) -> list:
-        res = []
-
-        if direction not in ('h', 'v'):
-            return res
-
-        if direction == 'h':
-            res.append((row, col - 1, 'h'))
-            res.append((row, col, 'v'))
-            res.append((row - 1, col, 'v'))
-            res.append((row, col + 1, 'h'))
-            res.append((row, col + 1, 'v'))
-            res.append((row - 1, col + 1, 'v'))
-
-        #falta se a aresta for vertical, mas é a mesma lógica, só que com as coordenadas trocadas
-        
-        if direction == 'v':
-            res.append((row - 1, col, 'v'))
-            res.append((row, col - 1, 'h'))
-            res.append((row, col, 'h'))
-            res.append((row + 1, col, 'v'))
-            res.append((row + 1, col - 1, 'h'))
-            res.append((row + 1, col, 'h'))
-
-
-        return res
+   
 
     def get_next_cells(self, row: int, col: int, direction: str) -> list:
         res = []
@@ -224,14 +197,13 @@ class Board:
                 if '\t' in line:
                     grid.append(line.split('\t'))
                 else:
-                    grid.append(line.split()) #há um erro no da stora
+                    grid.append(line.split()) 
         
         rows = len(grid)
         cols = len(grid[0])
         activeEdges = set()
         blockedEdges = set()
 
-        #Bloquear o contorno do tabuleiro
 
         for row in range(-1, rows + 1):
             blockedEdges.add((row, -1, 'h'))
@@ -265,115 +237,6 @@ class Board:
 
         self.propagate()
 
-    def propagate(self) -> bool:
-        """
-        Iteratively applies forced moves using modular helper functions.
-        Returns False instantly if a contradiction is found.
-        """
-        changed = True
-        
-        while changed:
-            changed = False
-            
-            # 1. Sweep Cells (Your original logic)
-            cells_valid, cells_changed = self.sweep_cells()
-            if not cells_valid:
-                return False
-            if cells_changed:
-                changed = True
-                
-            # 2. Sweep Vertices (The new hyper-fast logic)
-            vertices_valid, vertices_changed = self.sweep_vertices()
-            if not vertices_valid:
-                return False
-            if vertices_changed:
-                changed = True
-
-        # 3. Final Check
-        if self.has_premature_loop():
-            return False
-            
-        return True
-            
-
-    def sweep_cells(self) -> tuple[bool, bool]:
-        """Applies forced rules to numbered cells. Returns (is_valid, changed)."""
-        changed = False
-        for row in range(self.rows):
-            for col in range(self.cols):
-                cell_num = self.grid[row][col]
-                if cell_num == '.':
-                    continue
-                    
-                target = int(cell_num)
-                active = self.get_active_edges(row, col)
-                blocked = self.get_blocked_edges(row, col)
-                empty = 4 - active - blocked
-                
-                if active > target or blocked > 4 - target:
-                    return False, False 
-                    
-                if active == target and empty > 0:
-                    for edge in self.get_cell_edges(row, col):
-                        if edge not in self.activeEdges and edge not in self.blockedEdges:
-                            self.blockedEdges.add(edge)
-                            changed = True
-                            
-                elif active + empty == target and empty > 0:
-                    for edge in self.get_cell_edges(row, col):
-                        if edge not in self.activeEdges and edge not in self.blockedEdges:
-                            self.activeEdges.add(edge)
-                            changed = True
-                            
-        return True, changed
-
-
-    def sweep_vertices(self) -> tuple[bool, bool]:
-        """Applies intersection (vertex) continuity rules. Returns (is_valid, changed)."""
-        changed = False
-        
-        # Loop through every intersection (vertex) on the grid
-        for row in range(self.rows + 1):
-            for col in range(self.cols + 1):
-                # Grab the up to 4 edges touching this specific vertex
-                vertex_edges = []
-                if row > 0: vertex_edges.append((row - 1, col, 'v'))
-                if row < self.rows: vertex_edges.append((row, col, 'v'))
-                if col > 0: vertex_edges.append((row, col - 1, 'h'))
-                if col < self.cols: vertex_edges.append((row, col, 'h'))
-
-                # Count active vs empty edges using your class sets
-                active_count = sum(1 for e in vertex_edges if e in self.activeEdges)
-                empty_edges = [e for e in vertex_edges if e not in self.activeEdges and e not in self.blockedEdges]
-
-                # 1. Contradiction: More than 2 lines at a single intersection
-                if active_count > 2: 
-                    return False, False
-                    
-                # 2. Perfect: Has 2 lines. Block all remaining empty edges.
-                if active_count == 2 and empty_edges:
-                    for e in empty_edges: 
-                        self.block_edge(e)
-                    changed = True
-                    
-                # 3. Forced: Has 1 line and 1 empty. That empty MUST be active to make 2.
-                elif active_count == 1 and len(empty_edges) == 1:
-                    self.activate_edge(empty_edges[0])
-                    changed = True
-                    
-                # 4. Dead end: Has 1 line but NO emptys left. The line is trapped.
-                elif active_count == 1 and len(empty_edges) == 0:
-                    return False, False
-                    
-                # 5. Useless: Has 0 active lines and only 1 empty. Block it (lines can't start/end nowhere).
-                elif active_count == 0 and len(empty_edges) == 1:
-                    self.block_edge(empty_edges[0])
-                    changed = True
-
-        return True, changed
-
-
-
     def search_0_or_3(self):
         for row in range(self.rows):
             for col in range(self.cols):
@@ -391,10 +254,10 @@ class Board:
                                     self.activate_edge((row + 1, col, 'h'))
 
                                 elif row == cell_row: #direita
-                                    self.activate_edge((row, cell_col, 'v'))
-                                    self.activate_edge((row, col, 'v'))
+                                    self.activate_edge((row, col + 2, 'v')) # Fixed: Right edge of the right cell
+                                    self.activate_edge((row, col, 'v'))     # Left edge of the left cell
                                     self.activate_edge((row, col + 1, 'v'))
-                                    
+
                     for (d_row, d_col) in self.get_upper_diagonal_cell((row, col)): #diagonais
                             if self.grid[d_row][d_col] == '3':
                                 if d_col < col:
@@ -499,6 +362,105 @@ class Board:
             self.block_edge((self.rows, self. cols - 1, 'h'))
             self.block_edge((self.rows - 1, self.cols, 'v'))
     
+
+    def propagate(self) -> bool:
+        """
+        Iteratively applies forced moves using modular helper functions.
+        Returns False instantly if a contradiction is found.
+        """
+        changed = True
+        
+        while changed:
+            changed = False
+            
+            cells_valid, cells_changed = self.sweep_cells()
+            if not cells_valid:
+                return False
+            if cells_changed:
+                changed = True
+
+            vertices_valid, vertices_changed = self.sweep_vertices()
+            if not vertices_valid:
+                return False
+            if vertices_changed:
+                changed = True
+
+        if self.has_premature_loop():
+            return False
+            
+        return True
+            
+
+    def sweep_cells(self) -> tuple[bool, bool]:
+        """Applies forced rules to numbered cells. Returns (is_valid, changed)."""
+        changed = False
+        for row in range(self.rows):
+            for col in range(self.cols):
+                cell_num = self.grid[row][col]
+                if cell_num == '.':
+                    continue
+                    
+                target = int(cell_num)
+                active = self.get_active_edges(row, col)
+                blocked = self.get_blocked_edges(row, col)
+                empty = 4 - active - blocked
+                
+                if active > target or blocked > 4 - target:
+                    return False, False 
+                    
+                if active == target and empty > 0:
+                    for edge in self.get_cell_edges(row, col):
+                        if edge not in self.activeEdges and edge not in self.blockedEdges:
+                            self.blockedEdges.add(edge)
+                            changed = True
+                            
+                elif active + empty == target and empty > 0:
+                    for edge in self.get_cell_edges(row, col):
+                        if edge not in self.activeEdges and edge not in self.blockedEdges:
+                            self.activeEdges.add(edge)
+                            changed = True
+                            
+        return True, changed
+
+
+    def sweep_vertices(self) -> tuple[bool, bool]:
+        """Applies intersection (vertex) continuity rules. Returns (is_valid, changed)."""
+        changed = False
+
+        for row in range(self.rows + 1):
+            for col in range(self.cols + 1):
+
+                vertex_edges = []
+                if row > 0: vertex_edges.append((row - 1, col, 'v'))
+                if row < self.rows: vertex_edges.append((row, col, 'v'))
+                if col > 0: vertex_edges.append((row, col - 1, 'h'))
+                if col < self.cols: vertex_edges.append((row, col, 'h'))
+
+                active_count = sum(1 for e in vertex_edges if e in self.activeEdges)
+                empty_edges = [e for e in vertex_edges if e not in self.activeEdges and e not in self.blockedEdges]
+
+                if active_count > 2: 
+                    return False, False
+
+                if active_count == 2 and empty_edges:
+                    for e in empty_edges: 
+                        self.block_edge(e)
+                    changed = True
+
+                elif active_count == 1 and len(empty_edges) == 1:
+                    self.activate_edge(empty_edges[0])
+                    changed = True
+
+                elif active_count == 1 and len(empty_edges) == 0:
+                    return False, False
+
+                elif active_count == 0 and len(empty_edges) == 1:
+                    self.block_edge(empty_edges[0])
+                    changed = True
+
+        return True, changed
+
+    
     def has_premature_loop(self) -> bool:
         """Uses a Stack (DFS) with vertex-logic to quickly find illegal closed loops."""
         if not self.activeEdges:
@@ -506,8 +468,7 @@ class Board:
 
         visited = set()
         total_active = len(self.activeEdges)
-        
-        # Check every line to see if it's part of an illegal chunk
+
         for start_edge in self.activeEdges:
             if start_edge in visited:
                 continue
@@ -523,14 +484,12 @@ class Board:
                     
                 component.add(edge)
                 visited.add(edge)
-                
-                # Find the two vertices (intersections) this edge connects
+
                 if edge[2] == 'v':
                     vertices = [(edge[0], edge[1]), (edge[0] + 1, edge[1])]
                 else:
                     vertices = [(edge[0], edge[1]), (edge[0], edge[1] + 1)]
-                    
-                # Look at the neighboring lines extending from these two vertices
+
                 for row, col in vertices:
                     vertex_degree[(row, col)] += 1
                     
@@ -539,57 +498,24 @@ class Board:
                     if row < self.rows: vertex_edges.append((row, col, 'v'))
                     if col > 0: vertex_edges.append((row, col - 1, 'h'))
                     if col < self.cols: vertex_edges.append((row, col, 'h'))
-                    
-                    # Toss all active neighbors onto the stack
+
                     for neighbor in vertex_edges:
                         if neighbor in self.activeEdges and neighbor not in component:
                             stack.append(neighbor)
                             
-            # A chunk is a perfectly closed loop if EVERY vertex in it has exactly 2 lines
             is_closed_loop = all(deg == 2 for deg in vertex_degree.values())
             
-            # If we traced a perfect closed loop, but there are other lines elsewhere on the board...
             if is_closed_loop and len(component) < total_active:
-                return True # We found an illegal microloop!
-                
+                return True
+               
         return False
 
-
     def get_best_empty_edge(self):
-        # Search around '3's and '1's first
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.grid[row][col] in ('1', '3'):
-                    for edge in self.get_cell_edges(row, col):
-                        if edge not in self.activeEdges and edge not in self.blockedEdges:
-                            return edge
                             
-        # Fallback: just return the first unassigned edge you find
         for edge in self.get_all_edges():
             if edge not in self.activeEdges and edge not in self.blockedEdges:
                 return edge
         return None
-
-    def is_invalid(self) -> bool:
-            """Checks if the current board state violates any basic clues or has premature loops."""
-            
-            # 1. Check if any numbered clues are mathematically broken
-            for row in range(self.rows):
-                for col in range(self.cols):
-                    cell_val = self.grid[row][col]
-                    if cell_val != '.':
-                        # Too many active edges?
-                        if self.get_active_edges(row, col) > int(cell_val):
-                            return True
-                        # Too many blocked edges? (Impossible to reach the target)
-                        if self.get_blocked_edges(row, col) > 4 - int(cell_val):
-                            return True
-            
-            # 2. Check for illegal premature closed loops
-            if self.has_premature_loop():
-                return True
-                
-            return False
 
 
 class Slitherlink(Problem):
@@ -598,7 +524,6 @@ class Slitherlink(Problem):
         
         initial_state = SlitherlinkState(board)
         
-        # Initialize the parent 'Problem' class (Standard AIMA framework)
         super().__init__(initial_state)
 
     def actions(self, state: SlitherlinkState):
@@ -610,13 +535,11 @@ class Slitherlink(Problem):
             
         valid_actions = []
         
-        # Branch 1: Try Activating
         board_activate = Board(board.rows, board.cols, board.activeEdges.copy(), board.blockedEdges.copy(), board.grid)
         board_activate.activeEdges.add(edge)
-        if board_activate.propagate(): # Runs the giant while loop. If True, it's valid!
+        if board_activate.propagate(): 
             valid_actions.append(("activate", edge, board_activate))
             
-        # Branch 2: Try Blocking
         board_block = Board(board.rows, board.cols, board.activeEdges.copy(), board.blockedEdges.copy(), board.grid)
         board_block.blockedEdges.add(edge)
         if board_block.propagate():
@@ -626,28 +549,22 @@ class Slitherlink(Problem):
     
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action'."""
-        # Unpack the tuple we packed in the actions() function
+    
         action_type, edge, pre_calculated_board = action
 
-        # Because we already did all the heavy lifting (copying, advanced rules, and validity checks)
-        # in the actions() method, result() becomes incredibly fast.
         return SlitherlinkState(pre_calculated_board)
     def goal_test(self, state: SlitherlinkState):
         board = state.board
 
-        # 1. If there are ANY empty edges left, the board isn't finished.
-        # (This bypasses the ghost edge counting problem completely)
         if board.get_best_empty_edge() is not None:
             return False
             
-        # 2. Check if every numbered clue is perfectly satisfied
         for row in range(board.rows):
             for col in range(board.cols):
                 cell = board.grid[row][col]
                 if cell != '.' and board.get_active_edges(row, col) != int(cell):
                     return False
                     
-        # 3. Verify there is exactly ONE continuous loop using Vertex logic
         if not board.activeEdges:
             return False
 
@@ -661,14 +578,12 @@ class Slitherlink(Problem):
                 continue
             visited.add(edge)
             
-            # Find the two vertices this edge connects
             if edge[2] == 'v':
                 vertices = [(edge[0], edge[1]), (edge[0] + 1, edge[1])]
             else:
                 vertices = [(edge[0], edge[1]), (edge[0], edge[1] + 1)]
                 
             for row, col in vertices:
-                # Grab surrounding edges
                 vertex_edges = []
                 if row > 0: vertex_edges.append((row - 1, col, 'v'))
                 if row < board.rows: vertex_edges.append((row, col, 'v'))
@@ -678,16 +593,12 @@ class Slitherlink(Problem):
                 for neighbor in vertex_edges:
                     if neighbor in board.activeEdges and neighbor not in visited:
                         stack.append(neighbor)
-                        
-        # If the single connected component contains all active edges, it's a valid single loop!
+
         return len(visited) == len(board.activeEdges)
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
         # TODO
         pass 
-
-    
-
 
 if __name__ == "__main__":
     board = Board.parse_instance()
@@ -695,3 +606,4 @@ if __name__ == "__main__":
     problem = Slitherlink(board)
     goal = depth_first_tree_search(problem)
     goal.state.board.print_board()
+    
